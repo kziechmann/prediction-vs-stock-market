@@ -75,20 +75,32 @@ def window_return(dates: list[str], closes: list[float], days: int, today: date)
     return closes[-1] / base - 1.0
 
 
+# NYSE full-day closures and 1pm ET early closes. Update yearly (nyse.com/markets/hours-calendars).
+NYSE_HOLIDAYS = {
+    "2026-01-01", "2026-01-19", "2026-02-16", "2026-04-03", "2026-05-25", "2026-06-19", "2026-07-03",
+    "2026-09-07", "2026-11-26", "2026-12-25",
+    "2027-01-01", "2027-01-18", "2027-02-15", "2027-03-26", "2027-05-31", "2027-06-18", "2027-07-05",
+    "2027-09-06", "2027-11-25", "2027-12-24",
+}
+NYSE_HALF_DAYS = {"2026-11-27", "2026-12-24", "2027-11-26"}
+
+
 def trading_days_between(now: datetime, end: datetime) -> float:
     """Trading sessions (Mon-Fri, 14:30-21:00 UTC) remaining from now until end.
 
-    Holidays are ignored. Partial sessions count fractionally.
+    NYSE holidays count as zero and early-close days as half a session (2026-2027 calendar;
+    later years fall back to weekdays only). Partial sessions count fractionally.
     """
     if end <= now:
         return 0.0
     session = 6.5 * 3600
 
     def session_fraction(day: date, start: datetime, stop: datetime) -> float:
-        if day.weekday() >= 5:
+        if day.weekday() >= 5 or day.isoformat() in NYSE_HOLIDAYS:
             return 0.0
         open_ = datetime(day.year, day.month, day.day, 14, 30, tzinfo=timezone.utc)
-        close = datetime(day.year, day.month, day.day, 21, 0, tzinfo=timezone.utc)
+        close = datetime(day.year, day.month, day.day, 18 if day.isoformat() in NYSE_HALF_DAYS else 21, 0,
+                         tzinfo=timezone.utc)
         lo, hi = max(open_, start), min(close, stop)
         return max(0.0, (hi - lo).total_seconds()) / session
 

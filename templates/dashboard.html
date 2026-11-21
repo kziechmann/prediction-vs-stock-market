@@ -326,7 +326,7 @@ footer .wrap { padding-block: 20px 32px; display: grid; gap: 6px; }
         </figure>
         <figure class="chart-card">
           <h3>Crowd vs. stock-implied odds</h3>
-          <p>Share-price bets with the widest disagreement. Contract price in cents; the stock-implied price comes from its own volatility.</p>
+          <p>Share-price bets with the largest tradeable edge (after spread and fees; books wider than 10¢ left out). Contract price in cents; the stock-implied price comes from the stock's own volatility.</p>
           <div class="legend" id="dumbbellLegend"></div>
           <div class="chart" id="dumbbell"></div>
         </figure>
@@ -765,8 +765,10 @@ footer .wrap { padding-block: 20px 32px; display: grid; gap: 6px; }
     scEl.appendChild(svg);
   }
 
-  var pr = (D.price_signals || []).filter(function (r) { return r.model_prob != null; })
-    .sort(function (a, b) { return Math.abs(b.edge_mid) - Math.abs(a.edge_mid); }).slice(0, 12);
+  // Rank by the edge you could actually trade (after spread and fees); skip books too wide to mean much.
+  var pr = (D.price_signals || []).filter(function (r) {
+    return r.model_prob != null && (r.bid == null || r.ask == null || r.ask - r.bid <= 0.10);
+  }).sort(function (a, b) { return b.edge - a.edge; }).slice(0, 12);
   var dbEl = document.getElementById("dumbbell");
   if (pr.length) {
     var dl = document.getElementById("dumbbellLegend");

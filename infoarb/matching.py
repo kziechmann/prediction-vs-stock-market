@@ -127,7 +127,7 @@ NOISE = [
     (re.compile(r"\b(say|says|said|mention|mentions|mentioned|tweet|tweets|tweeted|posts?|posted|word)\b"), "mention/post count"),
     (re.compile(r"year in search|most searched|\bsearched\b|#1 (free )?app|top free app|app store|google play|most streamed|wrapped|top (song|artist|album)|box office|opening weekend|rotten tomatoes|youtube views|subscribers on youtube"), "popularity ranking"),
     (re.compile(r"best ai model|top ai model|ai model (is|be) (best|#1|top)|lmarena|chatbot arena|text arena|\barena\b|"
-                r"humanity.s last exam|frontiermath|arc-agi|swe-bench|benchmark score"), "AI leaderboard"),
+                r"humanity.s last exam|frontiermath|arc-agi|swe-bench|benchmark score|best (coding|image|video|reasoning) model"), "AI leaderboard"),
 ]
 
 CATEGORY_RULES = [

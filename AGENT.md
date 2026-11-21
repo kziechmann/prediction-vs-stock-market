@@ -82,6 +82,19 @@ For each candidate:
    timing or too thin), `priced-in`, `noise`, or `mapping-error`. Write a `thesis` of
    1–3 sentences: why the gap exists, the catalyst and its date, and what would prove it wrong.
 
+Practical notes from earlier runs:
+
+- One market can link to two companies (e.g. a merger: target and acquirer). Give each its own
+  direction and impact with `"by_ticker": {"TSLA": {"direction": 1, "impact_pct": 0.08}, ...}`.
+- When news is already public and traded (e.g. review scores that moved the stock the same day),
+  set `"impact_pct": 0` with verdict `priced-in`; 0 is respected, not replaced by the default.
+- Markets that resolve on price drawdowns (e.g. "AI bubble burst" = 3 of 6 drawdown/bankruptcy
+  conditions) are price-derived, not information. Price their legs from each stock's volatility
+  (see `infoarb/quant.py`: `prob_touch`, `trading_days_between`) and judge the rules wording;
+  don't treat their odds moves as unpriced news.
+- Successor-name legs and tabloid follow-ups are noise: `"ignore": true`.
+- If nothing clears the bar, say so plainly. That is a valid weekly result.
+
 Record everything in `info_arb/analysis/notes.json` (schema in its `_doc` field), set
 `"updated"` to today's date, and keep earlier entries unless they are clearly stale
 (market closed, or a later verdict replaces them).

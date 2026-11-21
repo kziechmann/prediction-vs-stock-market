@@ -190,8 +190,14 @@ def _windows(cfg: dict) -> list[int]:
     return [int(w) for w in cfg["event_signal"]["windows"]]
 
 
+def _pick(note: dict, key: str, default):
+    """Analyst value if present (0 is a real answer), else the default."""
+    return note[key] if note.get(key) is not None else default
+
+
 def event_signal(m: dict, link, category: str, st: dict, note: dict, cfg: dict) -> dict | None:
     ecfg = cfg["event_signal"]
+    note = {**note, **(note.get("by_ticker") or {}).get(link.ticker, {})}  # e.g. target vs acquirer
     text = f"{m.get('question', '')} {m.get('outcome_label') or ''}"
     role = matching.mna_role(text, link) if category == "mna" else None
     if "direction" in note:
@@ -199,7 +205,7 @@ def event_signal(m: dict, link, category: str, st: dict, note: dict, cfg: dict) 
     else:
         direction, dsrc = matching.heuristic_direction(category, text, link), "heuristic"
     impact_key = "mna_target" if (category == "mna" and role == "target") else category
-    impact = note.get("impact_pct") or cfg["impact_defaults"].get(impact_key, cfg["impact_defaults"]["other"])
+    impact = _pick(note, "impact_pct", cfg["impact_defaults"].get(impact_key, cfg["impact_defaults"]["other"]))
     impact *= link.weight
     conf = confidence(m)
 
@@ -288,7 +294,7 @@ def theme_signal(theme, items: list, stats: dict, notes: dict, cfg: dict, now: d
             if not d:
                 undecided += 1
                 continue
-            imp = mnote.get("impact_pct") or tnote.get("impact_pct") or theme.impact_pct
+            imp = _pick(mnote, "impact_pct", _pick(tnote, "impact_pct", theme.impact_pct))
             contribs.append({"key": m["key"], "question": m["question"], "url": m["url"], "platform": m["platform"],
                              "prob": m["prob"], "dp": round(dp, 4), "direction": d, "impact": imp,
                              "confidence": confidence(m), "contrib": d * dp * imp, "end_date": m.get("end_date"),

@@ -1,7 +1,303 @@
 {
-  "_doc": "Analyst judgments that persist across weekly scans. 'markets' is keyed by the 'key' field in data/latest.json (e.g. 'polymarket:12345', 'kalshi:KXTICKER-26DEC31'): direction (+1 YES is good for the stock or sector ETF, -1 bad), impact_pct (move if YES fully resolves, e.g. 0.06), ticker (override the linked ticker), category (override classification), ignore (true drops the market), verdict (actionable | watch | priced-in | noise | mapping-error), thesis (1-3 sentences), updated (YYYY-MM-DD). Market-level direction/impact also apply when the market is netted into a theme. 'themes' is keyed by theme id from themes.json: impact_pct (default for its markets), verdict, thesis, ignore, updated. 'tickers': implied_vol (annualized options-implied vol, e.g. 0.55, replaces realized vol for price bets), next_earnings (YYYY-MM-DD), note.",
-  "updated": null,
-  "themes": {},
-  "markets": {},
-  "tickers": {}
+  "_doc": "Analyst judgments that persist across weekly scans. 'markets' is keyed by the 'key' field in data/latest.json (e.g. 'polymarket:12345', 'kalshi:KXTICKER-26DEC31'): direction (+1 YES is good for the stock or sector ETF, -1 bad), impact_pct (move if YES fully resolves, e.g. 0.06), ticker (override the linked ticker), category (override classification), ignore (true drops the market), verdict (actionable | watch | priced-in | noise | mapping-error), thesis (1-3 sentences), updated (YYYY-MM-DD). by_ticker ({TICKER: {direction, impact_pct}}) sets different values per linked company, e.g. merger target vs acquirer; impact_pct 0 is respected. Market-level direction/impact also apply when the market is netted into a theme. 'themes' is keyed by theme id from themes.json: impact_pct (default for its markets), verdict, thesis, ignore, updated. 'tickers': implied_vol (annualized options-implied vol, e.g. 0.55, replaces realized vol for price bets), next_earnings (YYYY-MM-DD), note.",
+  "updated": "2026-11-21",
+  "themes": {
+    "crypto_policy": {
+      "verdict": "watch",
+      "updated": "2026-11-21",
+      "thesis": "Market-structure bill odds slipped 10 pts to 5% for mid-2027; implied effect on crypto equities is under 1%. Revisit if a Senate vote is scheduled."
+    },
+    "defense": {
+      "verdict": "watch",
+      "updated": "2026-11-21",
+      "thesis": "Ukraine ceasefire odds fell (supportive for defense) while ITA lagged the market slightly; gap under 1%."
+    },
+    "oil_supply": {
+      "verdict": "priced-in",
+      "updated": "2026-11-21",
+      "thesis": "Oil-shock odds fell and XLE already dropped 4.3% vs the market, more than the odds imply."
+    }
+  },
+  "markets": {
+    "polymarket:6941726": {
+      "verdict": "watch",
+      "thesis": "NVDA closed $125.53 after a 14% drop on Nov 20. A $120 intraday low needs -4.4% in the ~4.5 sessions left (Thanksgiving week): about 59% on realized vol vs a 43c ask, a 15-pt edge. Below the 20-pt bar for short-dated trades, and only ~$6.7K has traded, so the price may not be reliable.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXHUANGTESTIFY-27JUL-26DEC": {
+      "direction": -1,
+      "impact_pct": 0.01,
+      "verdict": "priced-in",
+      "thesis": "Testimony odds rose with the scandal, but NVDA is already down 21% vs the market over 30 days; a hearing adds little.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXHUANGTESTIFY-27JUL-27JAN": {
+      "direction": -1,
+      "impact_pct": 0.01,
+      "verdict": "priced-in",
+      "thesis": "Testimony odds rose with the scandal, but NVDA is already down 21% vs the market over 30 days; a hearing adds little.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXHUANGTESTIFY-27JUL-27JUL": {
+      "direction": -1,
+      "impact_pct": 0.01,
+      "verdict": "priced-in",
+      "thesis": "Testimony odds rose with the scandal, but NVDA is already down 21% vs the market over 30 days; a hearing adds little.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXNVDACEODATE-27-26DEC01": {
+      "direction": 1,
+      "impact_pct": 0.04,
+      "verdict": "priced-in",
+      "thesis": "Odds of a quick permanent-CEO pick fell (the board had not hired a search firm as of Nov 13). Longer uncertainty is negative, but worth perhaps 1% against a 21% drawdown driven more by the SEC report and the AI selloff.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXNVDACEODATE-27-26DEC16": {
+      "direction": 1,
+      "impact_pct": 0.04,
+      "verdict": "priced-in",
+      "thesis": "Odds of a quick permanent-CEO pick fell (the board had not hired a search firm as of Nov 13). Longer uncertainty is negative, but worth perhaps 1% against a 21% drawdown driven more by the SEC report and the AI selloff.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXNVDACEODATE-27-27JAN01": {
+      "direction": 1,
+      "impact_pct": 0.04,
+      "verdict": "priced-in",
+      "thesis": "Odds of a quick permanent-CEO pick fell (the board had not hired a search firm as of Nov 13). Longer uncertainty is negative, but worth perhaps 1% against a 21% drawdown driven more by the SEC report and the AI selloff.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXNVDACEODATE-27-27FEB01": {
+      "direction": 1,
+      "impact_pct": 0.04,
+      "verdict": "priced-in",
+      "thesis": "Odds of a quick permanent-CEO pick fell (the board had not hired a search firm as of Nov 13). Longer uncertainty is negative, but worth perhaps 1% against a 21% drawdown driven more by the SEC report and the AI selloff.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXNVDACEO-29JAN-CKAW": {
+      "ignore": true,
+      "verdict": "noise",
+      "thesis": "Individual successor and 'where does Huang go next' legs. The dated announcement markets carry the tradeable signal.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXNVDACEO-29JAN-CKRE": {
+      "ignore": true,
+      "verdict": "noise",
+      "thesis": "Individual successor and 'where does Huang go next' legs. The dated announcement markets carry the tradeable signal.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXNVDACEO-29JAN-IBUC": {
+      "ignore": true,
+      "verdict": "noise",
+      "thesis": "Individual successor and 'where does Huang go next' legs. The dated announcement markets carry the tradeable signal.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXNVDACEO-29JAN-JENS": {
+      "ignore": true,
+      "verdict": "noise",
+      "thesis": "Individual successor and 'where does Huang go next' legs. The dated announcement markets carry the tradeable signal.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXNVDACEO-29JAN-JSRO": {
+      "ignore": true,
+      "verdict": "noise",
+      "thesis": "Individual successor and 'where does Huang go next' legs. The dated announcement markets carry the tradeable signal.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXNVDACEO-29JAN-LSU": {
+      "ignore": true,
+      "verdict": "noise",
+      "thesis": "Individual successor and 'where does Huang go next' legs. The dated announcement markets carry the tradeable signal.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXNVDACEO-29JAN-NARO": {
+      "ignore": true,
+      "verdict": "noise",
+      "thesis": "Individual successor and 'where does Huang go next' legs. The dated announcement markets carry the tradeable signal.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXNVDACEO-29JAN-RHAA": {
+      "ignore": true,
+      "verdict": "noise",
+      "thesis": "Individual successor and 'where does Huang go next' legs. The dated announcement markets carry the tradeable signal.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXNVDACEO-29JAN-TCOO": {
+      "ignore": true,
+      "verdict": "noise",
+      "thesis": "Individual successor and 'where does Huang go next' legs. The dated announcement markets carry the tradeable signal.",
+      "updated": "2026-11-21"
+    },
+    "polymarket:6919836": {
+      "ignore": true,
+      "verdict": "noise",
+      "thesis": "Individual successor and 'where does Huang go next' legs. The dated announcement markets carry the tradeable signal.",
+      "updated": "2026-11-21"
+    },
+    "polymarket:6919849": {
+      "ignore": true,
+      "verdict": "noise",
+      "thesis": "Individual successor and 'where does Huang go next' legs. The dated announcement markets carry the tradeable signal.",
+      "updated": "2026-11-21"
+    },
+    "polymarket:6919851": {
+      "ignore": true,
+      "verdict": "noise",
+      "thesis": "Individual successor and 'where does Huang go next' legs. The dated announcement markets carry the tradeable signal.",
+      "updated": "2026-11-21"
+    },
+    "polymarket:6919862": {
+      "ignore": true,
+      "verdict": "noise",
+      "thesis": "Individual successor and 'where does Huang go next' legs. The dated announcement markets carry the tradeable signal.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXJOINJENSENHUANG-27JAN-AMD": {
+      "ignore": true,
+      "verdict": "noise",
+      "thesis": "Individual successor and 'where does Huang go next' legs. The dated announcement markets carry the tradeable signal.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXJOINJENSENHUANG-27JAN-NVDA": {
+      "ignore": true,
+      "verdict": "noise",
+      "thesis": "Individual successor and 'where does Huang go next' legs. The dated announcement markets carry the tradeable signal.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXJOINJENSENHUANG-27JAN-SPACEX": {
+      "ignore": true,
+      "verdict": "noise",
+      "thesis": "Individual successor and 'where does Huang go next' legs. The dated announcement markets carry the tradeable signal.",
+      "updated": "2026-11-21"
+    },
+    "polymarket:5144294": {
+      "direction": 1,
+      "impact_pct": 0.0,
+      "verdict": "priced-in",
+      "thesis": "GTA VI scored 99 on Metacritic on Nov 18 and TTWO rose about 6% that day; the later drop came with the market selloff on launch day. Public news, already traded. Next catalyst: first sales figures.",
+      "updated": "2026-11-21"
+    },
+    "polymarket:5144295": {
+      "direction": 1,
+      "impact_pct": 0.0,
+      "verdict": "priced-in",
+      "thesis": "GTA VI scored 99 on Metacritic on Nov 18 and TTWO rose about 6% that day; the later drop came with the market selloff on launch day. Public news, already traded. Next catalyst: first sales figures.",
+      "updated": "2026-11-21"
+    },
+    "polymarket:5144296": {
+      "direction": 1,
+      "impact_pct": 0.0,
+      "verdict": "priced-in",
+      "thesis": "GTA VI scored 99 on Metacritic on Nov 18 and TTWO rose about 6% that day; the later drop came with the market selloff on launch day. Public news, already traded. Next catalyst: first sales figures.",
+      "updated": "2026-11-21"
+    },
+    "polymarket:5732922": {
+      "direction": 1,
+      "impact_pct": 0.0,
+      "verdict": "priced-in",
+      "thesis": "GTA VI scored 99 on Metacritic on Nov 18 and TTWO rose about 6% that day; the later drop came with the market selloff on launch day. Public news, already traded. Next catalyst: first sales figures.",
+      "updated": "2026-11-21"
+    },
+    "polymarket:7018678": {
+      "direction": 1,
+      "impact_pct": 0.0,
+      "verdict": "priced-in",
+      "thesis": "GTA VI scored 99 on Metacritic on Nov 18 and TTWO rose about 6% that day; the later drop came with the market selloff on launch day. Public news, already traded. Next catalyst: first sales figures.",
+      "updated": "2026-11-21"
+    },
+    "polymarket:2252540": {
+      "by_ticker": {
+        "TSLA": {
+          "direction": 1,
+          "impact_pct": 0.08
+        },
+        "SPCX": {
+          "direction": -1,
+          "impact_pct": 0.03
+        }
+      },
+      "verdict": "priced-in",
+      "updated": "2026-11-21",
+      "thesis": "Talks reported advancing (Bloomberg, Nov 12); an announcement could come in December. TSLA is up 15% vs the market in 30 days, more than the odds move implies for the target. Musk cautioned it is not a certainty."
+    },
+    "polymarket:3585429": {
+      "by_ticker": {
+        "TSLA": {
+          "direction": 1,
+          "impact_pct": 0.08
+        },
+        "SPCX": {
+          "direction": -1,
+          "impact_pct": 0.03
+        }
+      },
+      "verdict": "priced-in",
+      "updated": "2026-11-21",
+      "thesis": "Talks reported advancing (Bloomberg, Nov 12); an announcement could come in December. TSLA is up 15% vs the market in 30 days, more than the odds move implies for the target. Musk cautioned it is not a certainty."
+    },
+    "polymarket:3585430": {
+      "by_ticker": {
+        "TSLA": {
+          "direction": 1,
+          "impact_pct": 0.08
+        },
+        "SPCX": {
+          "direction": -1,
+          "impact_pct": 0.03
+        }
+      },
+      "verdict": "priced-in",
+      "updated": "2026-11-21",
+      "thesis": "Talks reported advancing (Bloomberg, Nov 12); an announcement could come in December. TSLA is up 15% vs the market in 30 days, more than the odds move implies for the target. Musk cautioned it is not a certainty."
+    },
+    "polymarket:3585431": {
+      "by_ticker": {
+        "TSLA": {
+          "direction": 1,
+          "impact_pct": 0.08
+        },
+        "SPCX": {
+          "direction": -1,
+          "impact_pct": 0.03
+        }
+      },
+      "verdict": "priced-in",
+      "updated": "2026-11-21",
+      "thesis": "Talks reported advancing (Bloomberg, Nov 12); an announcement could come in December. TSLA is up 15% vs the market in 30 days, more than the odds move implies for the target. Musk cautioned it is not a certainty."
+    },
+    "polymarket:3585432": {
+      "by_ticker": {
+        "TSLA": {
+          "direction": 1,
+          "impact_pct": 0.08
+        },
+        "SPCX": {
+          "direction": -1,
+          "impact_pct": 0.03
+        }
+      },
+      "verdict": "priced-in",
+      "updated": "2026-11-21",
+      "thesis": "Talks reported advancing (Bloomberg, Nov 12); an announcement could come in December. TSLA is up 15% vs the market in 30 days, more than the odds move implies for the target. Musk cautioned it is not a certainty."
+    },
+    "polymarket:1390948": {
+      "direction": 1,
+      "impact_pct": 0.02,
+      "verdict": "priced-in",
+      "thesis": "Cheap Cybercab odds jumped, but TSLA's 30-day outperformance (merger talk) already exceeds the implied move.",
+      "updated": "2026-11-21"
+    },
+    "kalshi:KXWAYMOCITY-26DEC-DEN": {
+      "direction": 1,
+      "impact_pct": 0.002,
+      "verdict": "noise",
+      "thesis": "One-city launch timing is immaterial for Alphabet.",
+      "updated": "2026-11-21"
+    }
+  },
+  "tickers": {
+    "NVDA": {
+      "note": "CEO Jensen Huang resigned Nov 12; CFO Colette Kress is interim CEO. Reuters reported the SEC is looking at accounting. Q3 revenue $115.8B (Nov 17).",
+      "updated": "2026-11-21"
+    }
+  }
 }

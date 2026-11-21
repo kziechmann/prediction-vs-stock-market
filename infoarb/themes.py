@@ -20,6 +20,7 @@ class Theme:
     patterns: list[re.Pattern]
     positive: list[re.Pattern] = field(default_factory=list)
     negative: list[re.Pattern] = field(default_factory=list)
+    exclude: list[re.Pattern] = field(default_factory=list)
 
 
 @dataclass
@@ -38,7 +39,7 @@ class ThemeIndex:
         self.themes = [
             Theme(t["id"], t["name"], t.get("sector", ""), t["vehicle"], t.get("members", []),
                   int(t.get("direction", 0)), float(t.get("impact_pct", 0.03)), _rx(t["patterns"]),
-                  _rx(t.get("positive")), _rx(t.get("negative")))
+                  _rx(t.get("positive")), _rx(t.get("negative")), _rx(t.get("exclude")))
             for t in data.get("themes", [])
         ]
         self.by_id = {t.id: t for t in self.themes}
@@ -49,7 +50,7 @@ class ThemeIndex:
         out = []
         for t in self.themes:
             hit = next((m for rx in t.patterns if (m := rx.search(full))), None)
-            if not hit:
+            if not hit or any(rx.search(full) for rx in t.exclude):
                 continue
             pos = any(rx.search(specific) for rx in t.positive)
             neg = any(rx.search(specific) for rx in t.negative)

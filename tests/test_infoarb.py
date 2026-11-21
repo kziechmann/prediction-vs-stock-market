@@ -63,6 +63,12 @@ class QuantTests(unittest.TestCase):
         wed_open = datetime(2026, 11, 18, 14, 30, tzinfo=timezone.utc)
         self.assertAlmostEqual(quant.trading_days_between(wed_open, mon_close), 4.0, places=3)
 
+    def test_trading_days_skip_nyse_holidays(self):
+        sat = datetime(2026, 11, 21, 15, 0, tzinfo=timezone.utc)
+        month_end = datetime(2026, 12, 1, 4, 59, tzinfo=timezone.utc)
+        # Mon 23, Tue 24, Wed 25, (Thanksgiving 26 closed), Fri 27 half day, Mon 30
+        self.assertAlmostEqual(quant.trading_days_between(sat, month_end), 4 + 3.5 / 6.5, places=3)
+
     def test_realized_vol_recovers_input(self):
         h = fixtures.price_history("X", NOW.date(), 100, 0.4, days=400, seed=3)
         v = quant.realized_vol(h["close"], 250)
@@ -202,6 +208,11 @@ class ThemeMatchTests(unittest.TestCase):
 
     def test_event_title_counts_for_matching(self):
         self.assertIn("chips_china", self.match("Yes", event_title="Nvidia H20 sales to China resumed by...?"))
+
+    def test_theme_exclusions(self):
+        self.assertEqual(self.match("Will any Uranium Enrichment % Cap be in a US-Iran deal in 2026?"), {})
+        self.assertEqual(self.match("Will Illinois net electricity generation from nuclear energy exceed 8,000 GWh?"), {})
+        self.assertIn("nuclear_power", self.match("Will the NRC approve a small modular reactor in 2026?"))
 
     def test_unrelated(self):
         self.assertEqual(self.match("Will the Lakers win the NBA title?"), {})
@@ -509,6 +520,14 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(set(bad), {"S", "DAX", "FL"})
         self.assertEqual(set(hist), {"ZS"})
         self.assertEqual(errors, {})
+
+    def test_analyst_zero_impact_and_per_ticker_direction(self):
+        notes = {"markets": {"polymarket:e1": {"by_ticker": {"WBD": {"impact_pct": 0.0}, "PSKY": {"direction": -1}}}}}
+        res = signals.build(self.inputs["markets"], self.inputs["stocks"], INDEX, notes, CFG, NOW, themes=THEMES)
+        rows = {r["ticker"]: r for r in res["event_signals"] if r["key"] == "polymarket:e1"}
+        self.assertEqual(rows["WBD"]["impact_pct"], 0.0)      # 0 is respected, not replaced by the default
+        self.assertEqual(rows["WBD"]["score"], 0.0)
+        self.assertEqual((rows["PSKY"]["direction"], rows["PSKY"]["direction_source"]), (-1, "analyst"))
 
     def test_track_record(self):
         snap = {"date": (NOW.date() - timedelta(days=7)).isoformat(), "opportunities": [
