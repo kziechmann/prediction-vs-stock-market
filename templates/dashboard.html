@@ -1,0 +1,707 @@
+<!--HEAD-->
+<title>Info Arb Weekly</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Weekly scan of prediction markets about listed companies versus what their stocks have priced in.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: one 1180px reading column. Masthead + data health, then the analyst brief,
+   then ranked opportunity cards, two charts side by side, tabbed detail tables, method. */
+:root {
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --surface-2: #eceff4;
+  --ink: #111722;
+  --ink-2: #465063;
+  --muted: #747d8e;
+  --line: #dde2e9;
+  --accent: #1d5bbd;
+  --accent-wash: rgba(29, 91, 189, 0.08);
+  --pos: #0a7537;
+  --neg: #bf3328;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --mark-muted: #b8bec9;
+  --grid: #e7eaef;
+  --axis: #c3c8d1;
+  --good: #0ca30c;
+  --warning: #fab219;
+  --critical: #d03b3b;
+  --font-display: "Space Grotesk", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1015; --surface: #151920; --surface-2: #1c212a; --ink: #edf0f5; --ink-2: #b5bcc9;
+    --muted: #8a93a3; --line: #282e38; --accent: #74a6f2; --accent-wash: rgba(116, 166, 242, 0.12);
+    --pos: #3cc26f; --neg: #f2746b; --series-1: #3987e5; --series-2: #d95926; --mark-muted: #4b525e;
+    --grid: #232831; --axis: #3a414c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1015; --surface: #151920; --surface-2: #1c212a; --ink: #edf0f5; --ink-2: #b5bcc9;
+  --muted: #8a93a3; --line: #282e38; --accent: #74a6f2; --accent-wash: rgba(116, 166, 242, 0.12);
+  --pos: #3cc26f; --neg: #f2746b; --series-1: #3987e5; --series-2: #d95926; --mark-muted: #4b525e;
+  --grid: #232831; --axis: #3a414c; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.55 var(--font-body);
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px;
+}
+.wrap {
+  max-width: 1180px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); line-height: 1.1; }
+h2 { font-size: 1.3rem; line-height: 1.25; }
+h3 { font-size: 1.05rem; }
+.eyebrow { font-size: 0.74rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.mono { font-family: var(--font-mono); font-size: 0.86em; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.pos { color: var(--pos); }
+.neg { color: var(--neg); }
+
+/* masthead */
+.masthead { border-bottom: 1px solid var(--line); background: var(--surface); }
+.masthead .wrap { padding-block: 28px 20px; display: grid; gap: 10px; }
+.dek { margin: 0; color: var(--ink-2); max-width: 68ch; }
+.health { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
+  background: var(--surface-2); color: var(--ink-2); font-size: 0.8rem; white-space: nowrap;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.dot.good { background: var(--good); } .dot.warning { background: var(--warning); } .dot.critical { background: var(--critical); }
+
+main .wrap { display: grid; gap: 36px; padding-block: 28px 56px; }
+section { display: grid; gap: 14px; min-width: 0; }
+section > * { min-width: 0; }
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+.section-head p { margin: 0; color: var(--muted); font-size: 0.88rem; }
+
+/* stat tiles */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: grid; gap: 2px; }
+.stat .label { font-size: 0.82rem; color: var(--ink-2); }
+.stat .value { font-family: var(--font-body); font-weight: 600; font-size: 1.7rem; line-height: 1.2; }
+.stat .sub { font-size: 0.8rem; color: var(--muted); }
+@media (max-width: 760px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* brief */
+.prose { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 22px; min-width: 0; }
+.prose > * { max-width: 72ch; }
+.prose h2, .prose h3, .prose h4, .prose h5 { margin: 1.1em 0 0.35em; font-family: var(--font-display); }
+.prose h2:first-child, .prose h3:first-child { margin-top: 0; }
+.prose p, .prose ul, .prose ol { margin: 0.5em 0; }
+.prose li { margin: 0.2em 0; }
+.prose code { font-family: var(--font-mono); font-size: 0.85em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+.prose .table-wrap { max-width: 100%; overflow-x: auto; border: 0; border-radius: 0; background: none; }
+.prose table { border-collapse: collapse; font-size: 0.88rem; }
+.prose th, .prose td { border-bottom: 1px solid var(--line); padding: 6px 10px; text-align: left; }
+.empty { color: var(--muted); padding: 18px 22px; border: 1px dashed var(--line); border-radius: var(--radius); background: var(--surface); }
+
+/* filters */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.filters input, .filters select {
+  font: inherit; font-size: 0.88rem; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; min-height: 34px;
+}
+.filters input { min-width: 0; width: 240px; max-width: 100%; }
+.filters .count { color: var(--muted); font-size: 0.85rem; margin-left: auto; }
+
+/* opportunity cards */
+.cards { display: grid; gap: 12px; }
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 16px 18px; display: grid; gap: 10px; min-width: 0;
+}
+.card-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.rank { font-family: var(--font-mono); color: var(--muted); font-size: 0.85rem; min-width: 2.2em; }
+.ticker { font-family: var(--font-mono); font-weight: 500; font-size: 1rem; }
+.company { color: var(--ink-2); font-size: 0.9rem; }
+.badge {
+  font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600;
+  padding: 2px 8px; border-radius: 6px; background: var(--surface-2); color: var(--ink-2);
+}
+.badge.price { background: var(--accent-wash); color: var(--accent); }
+.verdict { font-size: 0.78rem; font-weight: 600; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2); display: inline-flex; gap: 6px; align-items: center; }
+.score { margin-left: auto; font-size: 0.85rem; color: var(--muted); }
+.score b { color: var(--ink); font-weight: 600; }
+.question { font-size: 1.02rem; font-weight: 500; line-height: 1.4; overflow-wrap: anywhere; }
+.question a { color: var(--ink); text-decoration-color: var(--line); }
+.question a:hover { text-decoration-color: var(--accent); }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 8px 16px; padding: 10px 0; border-block: 1px solid var(--line); }
+.metric { display: grid; gap: 1px; min-width: 0; }
+.metric .k { font-size: 0.74rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.metric .v { font-variant-numeric: tabular-nums; font-weight: 600; }
+.reading { margin: 0; color: var(--ink-2); font-size: 0.92rem; }
+.action { margin: 0; font-weight: 600; font-size: 0.93rem; }
+.thesis { margin: 0; font-size: 0.9rem; padding: 8px 12px; border-radius: 8px; background: var(--surface-2); }
+.thesis b { font-weight: 600; }
+.links { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.86rem; }
+
+/* charts */
+.charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 900px) { .charts { grid-template-columns: minmax(0, 1fr); } }
+.chart-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; display: grid; gap: 8px; min-width: 0; position: relative; }
+.chart-card p { margin: 0; color: var(--muted); font-size: 0.86rem; }
+.chart { position: relative; min-height: 120px; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 0.82rem; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.gridline { stroke: var(--grid); stroke-width: 1; }
+.axisline { stroke: var(--axis); stroke-width: 1; }
+.tick { fill: var(--muted); font-size: 11px; font-family: var(--font-body); }
+.axis-title { fill: var(--ink-2); font-size: 11.5px; font-family: var(--font-body); }
+.ref { stroke: var(--axis); stroke-width: 1.5; stroke-dasharray: none; }
+.ref-label { fill: var(--muted); font-size: 11px; font-family: var(--font-body); }
+.pt-flag { fill: var(--series-1); stroke: var(--surface); stroke-width: 2; }
+.pt-other { fill: var(--mark-muted); stroke: var(--surface); stroke-width: 2; }
+.pt-crowd { fill: var(--series-2); stroke: var(--surface); stroke-width: 2; }
+.pt-model { fill: var(--series-1); stroke: var(--surface); stroke-width: 2; }
+.bar-link { stroke: var(--axis); stroke-width: 2; stroke-linecap: round; }
+.row-label { fill: var(--ink-2); font-size: 12px; font-family: var(--font-body); }
+.row-label.mono { font-family: var(--font-mono); font-size: 11.5px; fill: var(--ink); }
+.hit { fill: transparent; cursor: pointer; }
+.hit:hover + .mark, .hit:focus + .mark { stroke: var(--ink); }
+.tooltip {
+  position: absolute; pointer-events: none; z-index: 5; max-width: 280px;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.14); padding: 8px 10px; font-size: 0.82rem; line-height: 1.4;
+}
+.tooltip .tv { font-weight: 600; font-variant-numeric: tabular-nums; }
+.tooltip .tq { color: var(--ink-2); margin-top: 3px; }
+
+/* tables */
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--line); }
+.tab {
+  font: inherit; font-size: 0.9rem; font-weight: 500; color: var(--ink-2); background: none; border: 0;
+  border-bottom: 2px solid transparent; padding: 8px 12px; cursor: pointer; margin-bottom: -1px;
+}
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab .n { color: var(--muted); font-size: 0.8rem; margin-left: 4px; }
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+table.data { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+table.data caption { text-align: left; padding: 10px 12px 4px; color: var(--muted); font-size: 0.82rem; }
+table.data th, table.data td { padding: 7px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+table.data th { font-weight: 600; color: var(--ink-2); font-size: 0.78rem; white-space: nowrap; position: sticky; top: 0; background: var(--surface); }
+table.data th button { all: unset; cursor: pointer; }
+table.data th[aria-sort] button::after { content: " ↕"; color: var(--muted); }
+table.data th[aria-sort="ascending"] button::after { content: " ↑"; color: var(--ink); }
+table.data th[aria-sort="descending"] button::after { content: " ↓"; color: var(--ink); }
+table.data td.r, table.data th.r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.data td.q { min-width: 260px; max-width: 460px; }
+table.data tbody tr:hover { background: var(--accent-wash); }
+table.data tr:last-child td { border-bottom: 0; }
+
+/* method + footer */
+.method { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .method { grid-template-columns: minmax(0, 1fr); } }
+.method > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; min-width: 0; }
+.method p, .method ul { margin: 0.4em 0 0; color: var(--ink-2); font-size: 0.9rem; }
+.method li { margin: 0.25em 0; }
+footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 0.82rem; }
+footer .wrap { padding-block: 20px 32px; display: grid; gap: 6px; }
+@media (prefers-reduced-motion: no-preference) { .card { transition: border-color 0.15s; } .card:hover { border-color: var(--axis); } }
+</style>
+<!--BODY-->
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow" id="eyebrow">Weekly scan</div>
+    <h1>Info Arb Weekly</h1>
+    <p class="dek">Prediction-market odds on listed companies, checked against what their stocks have actually priced in. Two kinds of gaps: event odds that moved while the stock stood still, and share-price bets the crowd prices differently from the stock's own volatility.</p>
+    <div class="health" id="health" aria-label="Data sources"></div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <section aria-labelledby="h-stats">
+      <h2 id="h-stats" hidden>This week in numbers</h2>
+      <div class="stats" id="stats"></div>
+    </section>
+
+    <section aria-labelledby="h-brief">
+      <div class="section-head"><h2 id="h-brief">Analyst brief</h2><p id="briefMeta"></p></div>
+      <div id="brief"></div>
+    </section>
+
+    <section aria-labelledby="h-opps">
+      <div class="section-head"><h2 id="h-opps">Top opportunities</h2><p>Ranked by size of the gap × how much money backs the market.</p></div>
+      <div class="filters" role="group" aria-label="Filter opportunities">
+        <input id="fQuery" type="search" placeholder="Search ticker or market" aria-label="Search ticker or market">
+        <select id="fSignal" aria-label="Signal type">
+          <option value="">All signals</option><option value="price">Price bets</option><option value="event">Event odds</option>
+        </select>
+        <select id="fPlatform" aria-label="Platform">
+          <option value="">All platforms</option><option value="polymarket">Polymarket</option><option value="kalshi">Kalshi</option>
+        </select>
+        <select id="fVerdict" aria-label="Analyst verdict">
+          <option value="">Any verdict</option><option value="actionable">Actionable</option><option value="watch">Watch</option>
+          <option value="priced-in">Priced in</option><option value="none">Not reviewed</option>
+        </select>
+        <span class="count" id="fCount"></span>
+      </div>
+      <div class="cards" id="cards"></div>
+    </section>
+
+    <section aria-labelledby="h-charts">
+      <h2 id="h-charts">Where the gaps are</h2>
+      <div class="charts">
+        <figure class="chart-card" style="margin:0">
+          <h3>Odds moved, stock didn't</h3>
+          <p>Each dot is an event market with a known direction. Horizontal: the 7-day stock move its odds change implies. Vertical: the stock's actual move vs. the market. Dots far from the diagonal are unpriced.</p>
+          <div class="legend" id="scatterLegend"></div>
+          <div class="chart" id="scatter"></div>
+        </figure>
+        <figure class="chart-card" style="margin:0">
+          <h3>Crowd vs. stock-implied odds</h3>
+          <p>Share-price bets with the widest disagreement. Contract price in cents; the stock-implied price comes from its own volatility.</p>
+          <div class="legend" id="dumbbellLegend"></div>
+          <div class="chart" id="dumbbell"></div>
+        </figure>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-tables">
+      <h2 id="h-tables">All scanned markets</h2>
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div id="tablePanel" role="tabpanel"></div>
+    </section>
+
+    <section aria-labelledby="h-method">
+      <h2 id="h-method">How it works</h2>
+      <div class="method">
+        <div>
+          <h3>Price bets</h3>
+          <ul>
+            <li>Markets like "NVDA above $200 on Dec 31" or "TSLA hits $500 in December" are priced a second way from the stock itself: a lognormal model with 20/60-day realized volatility, time counted in trading days.</li>
+            <li>"Hits" markets use the barrier-touch probability; already-touched levels count as 100¢.</li>
+            <li>Edge is measured against the price you would actually pay (ask for YES, 1 − bid for NO), net of Kalshi fees.</li>
+            <li>Realized volatility usually runs below options-implied volatility, especially before earnings. The analyst can override it with implied volatility per ticker.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Event odds</h3>
+          <ul>
+            <li>For earnings, approvals, deals, lawsuits and leadership markets, the 7-day odds change times an assumed impact gives the move the stock "should" have made.</li>
+            <li>That is compared with the stock's beta-adjusted return vs. SPY over the same week, scaled by the stock's own weekly volatility (σ).</li>
+            <li>Direction and impact start as keyword heuristics; the weekly analyst corrects them, and the corrections persist.</li>
+            <li>Mention/tweet-count markets, popularity rankings and AI leaderboards are excluded as noise.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>Not investment advice. Prediction-market prices can be thin, stale or manipulated, and a gap can mean the crowd is wrong rather than the stock. Check each market's resolution rules before trading.</div>
+    <div id="footMeta"></div>
+  </div>
+</footer>
+
+<script id="payload" type="application/json">__PAYLOAD__</script>
+<script>
+(function () {
+  "use strict";
+  var P = JSON.parse(document.getElementById("payload").textContent || "{}");
+  var D = P.data;
+  var MINUS = "−";
+
+  // ---------- formatting ----------
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (attrs[k] == null) continue;
+      if (k === "text") n.textContent = attrs[k];
+      else if (k === "cls") n.className = attrs[k];
+      else n.setAttribute(k, attrs[k]);
+    }
+    (kids || []).forEach(function (c) { if (c != null) n.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+    return n;
+  }
+  function sgn(x, s) { return (x > 0 ? "+" : x < 0 ? MINUS : "") + s; }
+  function cents(p) { return p == null ? "—" : Math.round(p * 100) + "¢"; }
+  function pts(d) { return d == null ? "—" : sgn(d, Math.abs(d * 100).toFixed(0) + " pts"); }
+  function pct(x, dg, signed) {
+    if (x == null) return "—";
+    var s = Math.abs(x * 100).toFixed(dg == null ? 1 : dg) + "%";
+    return signed === false ? (x < 0 ? MINUS : "") + s : sgn(x, s);
+  }
+  function sig(x) { return x == null ? "—" : sgn(x, Math.abs(x).toFixed(1) + "σ"); }
+  function compact(v) {
+    if (v == null) return "—";
+    var a = Math.abs(v);
+    if (a >= 1e9) return (v / 1e9).toFixed(1) + "B";
+    if (a >= 1e6) return (v / 1e6).toFixed(1) + "M";
+    if (a >= 1e4) return Math.round(v / 1e3) + "K";
+    if (a >= 1e3) return (v / 1e3).toFixed(1) + "K";
+    return Math.round(v).toString();
+  }
+  function vol(r) { return r.volume_unit === "contracts" ? compact(r.volume_total) + " ct" : "$" + compact(r.volume_total); }
+  function money(v) { return v == null ? "—" : "$" + Number(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function day(iso) {
+    if (!iso) return "—";
+    var d = new Date(iso);
+    return isNaN(d) ? "—" : d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: d.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined });
+  }
+  function cls(x) { return x == null ? "" : x > 0 ? "pos" : x < 0 ? "neg" : ""; }
+  function platformName(p) { return p === "kalshi" ? "Kalshi" : "Polymarket"; }
+  function yahoo(t) { return "https://finance.yahoo.com/quote/" + encodeURIComponent(t); }
+  function news(r) { return "https://news.google.com/search?q=" + encodeURIComponent((r.company || r.ticker) + " stock"); }
+  function kindLabel(r) {
+    if (r.kind === "touch") return (r.side === "up" ? "hits ↑ " : "dips ↓ ") + money(r.level);
+    if (r.kind === "range") return money(r.level) + "–" + money(r.level_hi);
+    return (r.side === "above" ? "above " : "below ") + money(r.level);
+  }
+  var VERDICTS = { actionable: ["Actionable", "good"], watch: ["Watch", "warning"], "priced-in": ["Priced in", "critical"], noise: ["Noise", "critical"], "mapping-error": ["Wrong link", "critical"] };
+
+  // ---------- header ----------
+  var eyebrow = document.getElementById("eyebrow"), health = document.getElementById("health");
+  if (!D) {
+    eyebrow.textContent = "Weekly scan · waiting for first run";
+    document.getElementById("stats").appendChild(el("div", { cls: "empty", style: "grid-column:1/-1", text: "No scan has run yet. After the first weekly run this page shows the flagged opportunities, the analyst brief and every scanned market." }));
+    ["brief", "cards", "scatter", "dumbbell", "tablePanel"].forEach(function (id) {
+      var n = document.getElementById(id);
+      if (id === "brief" || id === "cards") n.appendChild(el("div", { cls: "empty", text: id === "brief" ? "The brief appears after the analyst reviews the first scan." : "Opportunities appear after the first scan." }));
+    });
+    return;
+  }
+  var gen = new Date(D.generated_at);
+  eyebrow.textContent = "Weekly scan · " + gen.toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric" });
+  var S = D.sources || {};
+  function healthChip(label, s, detail) {
+    var state = !s ? "critical" : !s.ok ? "critical" : (s.warnings || s.failed) ? "warning" : "good";
+    var word = state === "good" ? "ok" : state === "warning" ? "partial" : "unavailable";
+    health.appendChild(el("span", { cls: "chip", title: s && (s.error || (s.warnings || []).join("; ")) || "" }, [
+      el("span", { cls: "dot " + state, "aria-hidden": "true" }), label + ": " + word + (detail ? " · " + detail : "")
+    ]));
+  }
+  if (S.polymarket) healthChip("Polymarket", S.polymarket, S.polymarket.markets != null ? compact(S.polymarket.markets) + " markets" : "");
+  if (S.kalshi) healthChip("Kalshi", S.kalshi, S.kalshi.markets != null ? compact(S.kalshi.markets) + " markets" : "");
+  if (S.stocks) healthChip("Stock prices", S.stocks, (S.stocks.tickers || 0) + " tickers" + (S.stocks.failed ? ", " + S.stocks.failed + " missing" : ""));
+  health.appendChild(el("span", { cls: "chip", text: "Prices as of " + gen.toLocaleString("en-US", { timeZone: "UTC", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }) + " UTC" }));
+
+  // ---------- stats ----------
+  var C = D.counts || {}, opps = D.opportunities || [], TR = (D.track_record || {}).summary || {};
+  function stat(label, value, sub) {
+    return el("div", { cls: "stat" }, [el("div", { cls: "label", text: label }), el("div", { cls: "value", text: value }), sub ? el("div", { cls: "sub", text: sub }) : null]);
+  }
+  var nPrice = opps.filter(function (o) { return o.signal === "price"; }).length;
+  var statsEl = document.getElementById("stats");
+  statsEl.appendChild(stat("Markets scanned", compact(C.markets), "Polymarket + Kalshi, open markets"));
+  statsEl.appendChild(stat("Linked to a listed company", compact(C.linked), (C.noise || 0) + " set aside as noise"));
+  statsEl.appendChild(stat("Flagged this week", String(opps.length), nPrice + " price bets · " + (opps.length - nPrice) + " event odds"));
+  var hit = TR.equity_calls ? TR.equity_hit_rate : TR.pm_hit_rate;
+  statsEl.appendChild(stat("Past calls that worked", hit == null ? "—" : Math.round(hit * 100) + "%",
+    hit == null ? "Builds up from week two" : (TR.equity_calls ? TR.equity_calls + " stock calls, avg " + pct(TR.equity_avg) + " vs SPY" : TR.pm_calls + " contract calls, avg " + pts(TR.pm_avg))));
+
+  // ---------- brief ----------
+  var briefEl = document.getElementById("brief");
+  if (P.brief && P.brief.html) {
+    var art = el("article", { cls: "prose" });
+    art.innerHTML = P.brief.html; // produced by infoarb/mdlite.py, which escapes all input
+    briefEl.appendChild(art);
+    document.getElementById("briefMeta").textContent = "Written " + day(P.brief.date + "T12:00:00Z") + " after reviewing this scan";
+  } else {
+    briefEl.appendChild(el("div", { cls: "empty", text: "No analyst brief for this scan yet. The weekly agent writes one after it reviews the flagged markets and the news behind them." }));
+  }
+
+  // ---------- opportunity cards ----------
+  function metric(k, v, c) { return el("div", { cls: "metric" }, [el("span", { cls: "k", text: k }), el("span", { cls: "v " + (c || ""), text: v })]); }
+  function card(r) {
+    var a = r.analyst || {};
+    var top = el("div", { cls: "card-top" }, [
+      el("span", { cls: "rank", text: "#" + r.rank }),
+      el("span", { cls: "ticker", text: "$" + r.ticker }),
+      el("span", { cls: "company", text: r.company + (r.link_weight < 1 ? " (via " + r.link_via + ")" : "") }),
+      el("span", { cls: "badge " + r.signal, text: r.signal === "price" ? "Price bet · " + r.kind : "Event · " + String(r.category).replace("_", " ") }),
+      el("span", { cls: "badge", text: platformName(r.platform) }),
+      a.verdict && VERDICTS[a.verdict] ? el("span", { cls: "verdict" }, [el("span", { cls: "dot " + VERDICTS[a.verdict][1], "aria-hidden": "true" }), VERDICTS[a.verdict][0]]) : null,
+      el("span", { cls: "score" }, ["score ", el("b", { text: r.score.toFixed(1) })])
+    ]);
+    var q = el("div", { cls: "question" }, [el("a", { href: r.url, target: "_blank", rel: "noopener noreferrer", text: r.question + (r.outcome_label && r.question.indexOf(r.outcome_label) < 0 ? " · " + r.outcome_label : "") })]);
+    var m = el("div", { cls: "metrics" });
+    if (r.signal === "price") {
+      m.appendChild(metric("Crowd", cents(r.market_prob)));
+      m.appendChild(metric("Stock-implied", cents(r.model_prob)));
+      m.appendChild(metric("Edge after spread", pts(r.edge), cls(r.edge)));
+      m.appendChild(metric("Contract", kindLabel(r)));
+      m.appendChild(metric("Stock / distance", money(r.stock_price) + " · " + pct(r.distance_pct, 1)));
+      m.appendChild(metric("Resolves", day(r.end_date) + " · " + r.trading_days.toFixed(1) + " tdays"));
+    } else {
+      m.appendChild(metric("Crowd", cents(r.market_prob) + " (" + pts(r.prob_change) + ")", ""));
+      m.appendChild(metric("Implied stock move", pct(r.expected_move), cls(r.expected_move)));
+      m.appendChild(metric("Actual vs SPY, 7d", pct(r.abn_return), cls(r.abn_return)));
+      m.appendChild(metric("Gap", sig(r.gap_z)));
+      m.appendChild(metric("Direction", r.direction > 0 ? "YES helps stock" : r.direction < 0 ? "YES hurts stock" : "Unclear", ""));
+    }
+    if (r.signal !== "price") m.appendChild(metric("Resolves", day(r.end_date)));
+    m.appendChild(metric("Volume", vol(r)));
+    var kids = [top, q, m, el("p", { cls: "reading", text: r.reading }), el("p", { cls: "action", text: "→ " + r.action })];
+    if (a.thesis) kids.push(el("p", { cls: "thesis" }, [el("b", { text: "Analyst: " }), a.thesis]));
+    if (r.proxy_note) kids.push(el("p", { cls: "reading", text: "Proxy link: " + r.proxy_note }));
+    kids.push(el("div", { cls: "links" }, [
+      el("a", { href: r.url, target: "_blank", rel: "noopener noreferrer", text: "Open on " + platformName(r.platform) + " ↗" }),
+      el("a", { href: yahoo(r.ticker), target: "_blank", rel: "noopener noreferrer", text: r.ticker + " chart ↗" }),
+      el("a", { href: news(r), target: "_blank", rel: "noopener noreferrer", text: "News ↗" })
+    ]));
+    return el("article", { cls: "card", "aria-label": "#" + r.rank + " " + r.ticker }, kids);
+  }
+  var cardsEl = document.getElementById("cards");
+  var fQ = document.getElementById("fQuery"), fS = document.getElementById("fSignal"), fP = document.getElementById("fPlatform"), fV = document.getElementById("fVerdict");
+  function renderCards() {
+    var q = fQ.value.trim().toLowerCase();
+    var rows = opps.filter(function (r) {
+      var v = (r.analyst || {}).verdict || "none";
+      return (!q || (r.ticker + " " + r.company + " " + r.question).toLowerCase().indexOf(q) >= 0) &&
+        (!fS.value || r.signal === fS.value) && (!fP.value || r.platform === fP.value) && (!fV.value || v === fV.value);
+    });
+    cardsEl.textContent = "";
+    if (!opps.length) cardsEl.appendChild(el("div", { cls: "empty", text: "Nothing cleared the thresholds this week. The tables below still list every linked market." }));
+    else if (!rows.length) cardsEl.appendChild(el("div", { cls: "empty", text: "No opportunities match these filters." }));
+    rows.forEach(function (r) { cardsEl.appendChild(card(r)); });
+    document.getElementById("fCount").textContent = rows.length + " of " + opps.length + " shown";
+  }
+  [fQ, fS, fP, fV].forEach(function (n) { n.addEventListener("input", renderCards); });
+  try { var saved = JSON.parse(localStorage.getItem("infoarb.filters") || "{}"); fS.value = saved.s || ""; fP.value = saved.p || ""; fV.value = saved.v || ""; } catch (e) {}
+  [fS, fP, fV].forEach(function (n) { n.addEventListener("change", function () { try { localStorage.setItem("infoarb.filters", JSON.stringify({ s: fS.value, p: fP.value, v: fV.value })); } catch (e) {} }); });
+  renderCards();
+
+  // ---------- charts ----------
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function s(tag, attrs, text) {
+    var n = document.createElementNS(SVGNS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function tooltip(host) {
+    var t = el("div", { cls: "tooltip", hidden: "" });
+    host.appendChild(t);
+    return {
+      show: function (x, y, value, label) {
+        t.textContent = "";
+        t.appendChild(el("div", { cls: "tv", text: value }));
+        t.appendChild(el("div", { cls: "tq", text: label }));
+        t.hidden = false;
+        var w = host.clientWidth, tw = t.offsetWidth;
+        t.style.left = Math.max(0, Math.min(w - tw, x + 12)) + "px";
+        t.style.top = Math.max(0, y - t.offsetHeight - 10) + "px";
+      },
+      hide: function () { t.hidden = true; }
+    };
+  }
+  function niceMax(v) {
+    var steps = [0.01, 0.02, 0.03, 0.05, 0.08, 0.1, 0.15, 0.2, 0.3, 0.5, 1];
+    for (var i = 0; i < steps.length; i++) if (v <= steps[i]) return steps[i];
+    return Math.ceil(v * 10) / 10;
+  }
+  function legendItem(cssVar, label) {
+    return el("span", {}, [el("span", { cls: "dot", style: "background:var(" + cssVar + ")", "aria-hidden": "true" }), label]);
+  }
+
+  var ev = (D.event_signals || []).filter(function (r) { return r.expected_move != null && r.abn_return != null; });
+  var scEl = document.getElementById("scatter");
+  if (ev.length) {
+    var sl = document.getElementById("scatterLegend");
+    sl.appendChild(legendItem("--series-1", "Flagged"));
+    sl.appendChild(legendItem("--mark-muted", "Other event markets"));
+  }
+  function drawScatter() {
+    scEl.textContent = "";
+    if (!ev.length) { scEl.appendChild(el("div", { cls: "empty", text: "No event markets with a known direction moved enough this week." })); return; }
+    var W = Math.max(280, scEl.clientWidth), H = Math.round(Math.min(360, W * 0.78));
+    var m = { l: 62, r: 14, t: 10, b: 40 };
+    var ext = 0;
+    ev.forEach(function (r) { ext = Math.max(ext, Math.abs(r.expected_move), Math.abs(r.abn_return)); });
+    var M = niceMax(ext * 1.08 || 0.02);
+    var x = function (v) { return m.l + (v + M) / (2 * M) * (W - m.l - m.r); };
+    var y = function (v) { return m.t + (M - v) / (2 * M) * (H - m.t - m.b); };
+    var svg = s("svg", { viewBox: "0 0 " + W + " " + H, width: W, height: H, role: "img", "aria-label": "Scatter of implied versus actual stock moves for " + ev.length + " event markets" });
+    [-M, -M / 2, 0, M / 2, M].forEach(function (v) {
+      svg.appendChild(s("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), "class": v === 0 ? "axisline" : "gridline" }));
+      svg.appendChild(s("line", { y1: m.t, y2: H - m.b, x1: x(v), x2: x(v), "class": v === 0 ? "axisline" : "gridline" }));
+      var lab = pct(v, M < 0.1 ? 1 : 0).replace("+", "");
+      svg.appendChild(s("text", { x: m.l - 6, y: y(v) + 4, "text-anchor": "end", "class": "tick" }, lab));
+      svg.appendChild(s("text", { x: x(v), y: H - m.b + 16, "text-anchor": "middle", "class": "tick" }, lab));
+    });
+    svg.appendChild(s("line", { x1: x(-M), y1: y(-M), x2: x(M), y2: y(M), "class": "ref" }));
+    svg.appendChild(s("text", { x: x(M * 0.92), y: y(M * 0.92) + 14, "text-anchor": "end", "class": "ref-label" }, "fully priced"));
+    svg.appendChild(s("text", { x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle", "class": "axis-title" }, "Move implied by odds change"));
+    svg.appendChild(s("text", { x: 11, y: (m.t + H - m.b) / 2, "text-anchor": "middle", "class": "axis-title", transform: "rotate(-90 11 " + (m.t + H - m.b) / 2 + ")" }, "Actual move vs SPY"));
+    var tip = tooltip(scEl);
+    ev.slice().sort(function (a, b) { return (a.flagged ? 1 : 0) - (b.flagged ? 1 : 0); }).forEach(function (r) {
+      var cx = x(r.expected_move), cy = y(Math.max(-M, Math.min(M, r.abn_return)));
+      var g = s("g", {});
+      var hitC = s("circle", { cx: cx, cy: cy, r: 12, "class": "hit", tabindex: "0", "aria-label": r.ticker + ": implied " + pct(r.expected_move) + ", actual " + pct(r.abn_return) });
+      var dot = s("circle", { cx: cx, cy: cy, r: r.flagged ? 5.5 : 4.5, "class": "mark " + (r.flagged ? "pt-flag" : "pt-other") });
+      function on() { tip.show(cx, cy, "$" + r.ticker + "  implied " + pct(r.expected_move) + " · actual " + pct(r.abn_return) + " · gap " + sig(r.gap_z), r.question); }
+      hitC.addEventListener("pointerenter", on); hitC.addEventListener("focus", on);
+      hitC.addEventListener("pointerleave", tip.hide); hitC.addEventListener("blur", tip.hide);
+      hitC.addEventListener("click", function () { window.open(r.url, "_blank", "noopener"); });
+      g.appendChild(hitC); g.appendChild(dot); svg.appendChild(g);
+      if (r.flagged && r.rank) { svg.appendChild(s("text", { x: cx + 8, y: cy - 7, "class": "row-label mono" }, r.ticker)); }
+    });
+    scEl.appendChild(svg);
+  }
+
+  var pr = (D.price_signals || []).filter(function (r) { return r.model_prob != null; })
+    .sort(function (a, b) { return Math.abs(b.edge_mid) - Math.abs(a.edge_mid); }).slice(0, 12);
+  var dbEl = document.getElementById("dumbbell");
+  if (pr.length) {
+    var dl = document.getElementById("dumbbellLegend");
+    dl.appendChild(legendItem("--series-2", "Crowd price"));
+    dl.appendChild(legendItem("--series-1", "Stock-implied"));
+  }
+  function drawDumbbell() {
+    dbEl.textContent = "";
+    if (!pr.length) { dbEl.appendChild(el("div", { cls: "empty", text: "No share-price markets were priced this week." })); return; }
+    var W = Math.max(280, dbEl.clientWidth), row = 28, labelW = Math.min(150, W * 0.36);
+    var m = { l: labelW, r: 16, t: 6, b: 30 };
+    var H = m.t + pr.length * row + m.b;
+    var x = function (p) { return m.l + p * (W - m.l - m.r); };
+    var svg = s("svg", { viewBox: "0 0 " + W + " " + H, width: W, height: H, role: "img", "aria-label": "Crowd versus stock-implied contract prices for " + pr.length + " markets" });
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (v) {
+      svg.appendChild(s("line", { x1: x(v), x2: x(v), y1: m.t, y2: H - m.b, "class": v === 0 ? "axisline" : "gridline" }));
+      svg.appendChild(s("text", { x: x(v), y: H - m.b + 16, "text-anchor": "middle", "class": "tick" }, Math.round(v * 100) + "¢"));
+    });
+    var tip = tooltip(dbEl);
+    pr.forEach(function (r, i) {
+      var cy = m.t + i * row + row / 2;
+      var lab = r.ticker + " " + (r.kind === "touch" ? (r.side === "up" ? "↑" : "↓") : r.kind === "range" ? "∈" : r.side === "above" ? ">" : "<") + "$" + Math.round(r.level);
+      svg.appendChild(s("text", { x: m.l - 10, y: cy + 4, "text-anchor": "end", "class": "row-label mono" }, lab));
+      var a = x(r.market_prob), b = x(r.model_prob);
+      svg.appendChild(s("line", { x1: Math.min(a, b), x2: Math.max(a, b), y1: cy, y2: cy, "class": "bar-link" }));
+      svg.appendChild(s("circle", { cx: a, cy: cy, r: 5, "class": "pt-crowd" }));
+      svg.appendChild(s("circle", { cx: b, cy: cy, r: 5, "class": "pt-model" }));
+      var hitR = s("rect", { x: 0, y: cy - row / 2, width: W, height: row, "class": "hit", tabindex: "0", "aria-label": lab + ": crowd " + cents(r.market_prob) + ", stock-implied " + cents(r.model_prob) });
+      function on() { tip.show(Math.max(a, b), cy, "Crowd " + cents(r.market_prob) + " · stock-implied " + cents(r.model_prob) + " · edge " + pts(r.edge), r.question); }
+      hitR.addEventListener("pointerenter", on); hitR.addEventListener("focus", on);
+      hitR.addEventListener("pointerleave", tip.hide); hitR.addEventListener("blur", tip.hide);
+      hitR.addEventListener("click", function () { window.open(r.url, "_blank", "noopener"); });
+      svg.appendChild(hitR);
+    });
+    dbEl.appendChild(svg);
+  }
+  drawScatter(); drawDumbbell();
+  var lastW = 0;
+  if (window.ResizeObserver) new ResizeObserver(function () {
+    var w = scEl.clientWidth; if (Math.abs(w - lastW) < 8) return; lastW = w; drawScatter(); drawDumbbell();
+  }).observe(scEl);
+
+  // ---------- tables ----------
+  function link(r) { return el("a", { href: r.url, target: "_blank", rel: "noopener noreferrer", text: r.question + (r.outcome_label && r.question.indexOf(r.outcome_label) < 0 ? " · " + r.outcome_label : "") }); }
+  function tick(r) { return el("span", { cls: "mono", text: r.ticker }); }
+  var TABLES = [
+    { id: "price", label: "Price bets", rows: D.price_signals || [], caption: "Share-price markets priced against the stock's own volatility. Edge is after spread and fees.", cols: [
+      ["Ticker", tick, "ticker"], ["Market", link, "question", "q"], ["Contract", kindLabel, "level"],
+      ["Stock", function (r) { return money(r.stock_price); }, "stock_price", "r"],
+      ["Days", function (r) { return r.trading_days.toFixed(1); }, "trading_days", "r"],
+      ["σ", function (r) { return pct(r.sigma, 0, false); }, "sigma", "r"],
+      ["Crowd", function (r) { return cents(r.market_prob); }, "market_prob", "r"],
+      ["Stock-implied", function (r) { return cents(r.model_prob); }, "model_prob", "r"],
+      ["Edge", function (r) { return el("span", { cls: cls(r.edge), text: pts(r.edge) }); }, "edge", "r"],
+      ["Side", function (r) { return r.trade_side + " @ " + cents(r.entry); }, "trade_side"],
+      ["Volume", vol, "volume_total", "r"], ["Score", function (r) { return r.score.toFixed(1); }, "score", "r"]] },
+    { id: "event", label: "Event odds", rows: D.event_signals || [], caption: "Company-event markets whose odds moved at least 5 pts this week.", cols: [
+      ["Ticker", tick, "ticker"], ["Market", link, "question", "q"], ["Type", function (r) { return String(r.category).replace("_", " "); }, "category"],
+      ["YES is", function (r) { return (r.direction > 0 ? "good" : r.direction < 0 ? "bad" : "unclear") + (r.direction_source === "analyst" ? " ✓" : ""); }, "direction"],
+      ["Crowd", function (r) { return cents(r.market_prob); }, "market_prob", "r"],
+      ["Δ 7d", function (r) { return el("span", { cls: cls(r.prob_change), text: pts(r.prob_change) }); }, "prob_change", "r"],
+      ["Implied move", function (r) { return pct(r.expected_move); }, "expected_move", "r"],
+      ["Stock vs SPY", function (r) { return el("span", { cls: cls(r.abn_return), text: pct(r.abn_return) }); }, "abn_return", "r"],
+      ["Gap", function (r) { return sig(r.gap_z); }, "gap_z", "r"],
+      ["Volume", vol, "volume_total", "r"], ["Score", function (r) { return r.score.toFixed(1); }, "score", "r"]] },
+    { id: "watch", label: "Watchlist", rows: D.watchlist || [], caption: "Linked markets that did not produce a signal (too quiet, price-derived, noise, or no stock data). Sorted by volume.", cols: [
+      ["Ticker", tick, "ticker"], ["Market", link, "question", "q"],
+      ["Why not flagged", function (r) { return r.noise ? "noise: " + r.noise : String(r.category).replace("_", " "); }, "category"],
+      ["Crowd", function (r) { return cents(r.prob); }, "prob", "r"],
+      ["Δ 7d", function (r) { return pts(r.prob_change_7d); }, "prob_change_7d", "r"],
+      ["Stock vs SPY", function (r) { return pct(r.stock_abn_7d); }, "stock_abn_7d", "r"],
+      ["Volume", vol, "volume_total", "r"], ["Resolves", function (r) { return day(r.end_date); }, "end_date"]] },
+    { id: "track", label: "Track record", rows: (D.track_record || {}).rows || [], caption: "Signals flagged in earlier weeks and what happened since. Stock calls: beta-1 return vs SPY in the call's direction. Contract calls: change in the side's price.", cols: [
+      ["Flagged", function (r) { return day(r.flagged_on + "T12:00:00Z"); }, "flagged_on"], ["Ticker", tick, "ticker"], ["Market", link, "question", "q"],
+      ["Call", function (r) { return r.signal === "price" ? "Buy " + r.trade_side + " @ " + cents(r.entry) : r.stock_side > 0 ? "Long" : r.stock_side < 0 ? "Short" : "None"; }, "signal"],
+      ["Stock vs SPY since", function (r) { return pct(r.abn_ret); }, "abn_ret", "r"],
+      ["Result", function (r) { var v = r.signal === "price" ? r.pm_pnl : r.equity_pnl; return el("span", { cls: cls(v), text: r.signal === "price" ? pts(v) : pct(v) }); }, "equity_pnl", "r"],
+      ["Market", function (r) { return r.market_open ? "open · " + cents(r.market_prob_now) : "closed"; }, "market_open"]] }
+  ];
+  var tabsEl = document.getElementById("tabs"), panel = document.getElementById("tablePanel");
+  var sortState = {};
+  function drawTable(t) {
+    panel.textContent = "";
+    if (!t.rows.length) { panel.appendChild(el("div", { cls: "empty", text: t.id === "track" ? "The track record starts once a scan is at least five days old." : "Nothing in this list this week." })); return; }
+    var st = sortState[t.id];
+    var rows = t.rows.slice();
+    if (st) rows.sort(function (a, b) {
+      var x = a[st.key], y = b[st.key];
+      if (x == null) return 1; if (y == null) return -1;
+      return (x > y ? 1 : x < y ? -1 : 0) * st.dir;
+    });
+    var table = el("table", { cls: "data" }, [el("caption", { text: t.caption + " " + t.rows.length + " rows." })]);
+    var hr = el("tr");
+    t.cols.forEach(function (c) {
+      var th = el("th", { cls: c[3] === "r" ? "r" : null, scope: "col", "aria-sort": st && st.key === c[2] ? (st.dir > 0 ? "ascending" : "descending") : "none" });
+      var b = el("button", { type: "button", text: c[0] });
+      b.addEventListener("click", function () {
+        var cur = sortState[t.id];
+        sortState[t.id] = { key: c[2], dir: cur && cur.key === c[2] ? -cur.dir : (c[3] === "r" ? -1 : 1) };
+        drawTable(t);
+      });
+      th.appendChild(b); hr.appendChild(th);
+    });
+    table.appendChild(el("thead", {}, [hr]));
+    var tb = el("tbody");
+    rows.forEach(function (r) {
+      var tr = el("tr");
+      t.cols.forEach(function (c) {
+        var v = c[1](r);
+        tr.appendChild(el("td", { cls: c[3] || null }, [typeof v === "string" ? v : v]));
+      });
+      tb.appendChild(tr);
+    });
+    table.appendChild(tb);
+    panel.appendChild(el("div", { cls: "table-wrap" }, [table]));
+  }
+  function select(id) {
+    TABLES.forEach(function (t) {
+      var b = document.getElementById("tab-" + t.id);
+      b.setAttribute("aria-selected", t.id === id ? "true" : "false");
+      b.tabIndex = t.id === id ? 0 : -1;
+      if (t.id === id) { drawTable(t); panel.setAttribute("aria-labelledby", b.id); }
+    });
+    try { localStorage.setItem("infoarb.tab", id); } catch (e) {}
+  }
+  TABLES.forEach(function (t, i) {
+    var b = el("button", { cls: "tab", role: "tab", id: "tab-" + t.id, type: "button" }, [t.label, el("span", { cls: "n", text: String(t.rows.length) })]);
+    b.addEventListener("click", function () { select(t.id); });
+    b.addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      var j = (i + (e.key === "ArrowRight" ? 1 : TABLES.length - 1)) % TABLES.length;
+      select(TABLES[j].id); document.getElementById("tab-" + TABLES[j].id).focus();
+    });
+    tabsEl.appendChild(b);
+  });
+  var startTab = "price";
+  try { startTab = localStorage.getItem("infoarb.tab") || startTab; } catch (e) {}
+  if (!TABLES.some(function (t) { return t.id === startTab; })) startTab = "price";
+  select(startTab);
+
+  document.getElementById("footMeta").textContent = "Data: Polymarket Gamma API, Kalshi trade API, Yahoo Finance (Stooq fallback). Generated " + D.generated_at + ". Benchmark " + D.benchmark + ".";
+})();
+</script>

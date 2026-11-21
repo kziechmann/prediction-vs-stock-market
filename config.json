@@ -1,0 +1,67 @@
+{
+  "_doc": "Scanner settings. Volumes are USD for Polymarket and contracts (each pays $1) for Kalshi. Probabilities are 0-1.",
+  "sources": {
+    "polymarket": {
+      "enabled": true,
+      "max_events": 1500,
+      "tag_slugs": ["stocks", "business", "earnings", "tech", "finance", "economy", "ipos", "big-tech", "ai", "companies"],
+      "max_events_per_tag": 300
+    },
+    "kalshi": {
+      "enabled": true,
+      "series_categories": ["Companies", "Financials", "Tech & Science", "Science and Technology", "Health"],
+      "max_series": 400,
+      "max_pages": 60,
+      "skip_categories": ["Sports", "Climate and Weather"],
+      "skip_series_prefixes": ["KXMVE"],
+      "max_history_calls": 150,
+      "taker_fee_rate": 0.07
+    },
+    "stocks": {
+      "benchmark": "SPY",
+      "history_range": "6mo",
+      "request_pause_seconds": 0.35
+    }
+  },
+  "filters": {
+    "min_volume_any": 2000,
+    "min_volume_event": 20000,
+    "min_volume_price": 5000,
+    "min_confidence": 0.25
+  },
+  "price_signal": {
+    "min_edge": 0.06,
+    "edge_unit": 0.05,
+    "vol_blend_short_weight": 0.5,
+    "vol_multiplier": 1.0,
+    "min_trading_days": 0.25,
+    "max_trading_days": 400,
+    "skip_market_prob_outside": [0.02, 0.98]
+  },
+  "event_signal": {
+    "window_days": 7,
+    "min_prob_change": 0.05,
+    "gap_unit": 0.01,
+    "unknown_direction_weight": 0.5
+  },
+  "ranking": {
+    "min_score": 0.8,
+    "max_opportunities": 25,
+    "max_watchlist": 120
+  },
+  "impact_defaults": {
+    "_doc": "Assumed % stock move if the event fully resolves YES, by category. The weekly analyst can override per market in analysis/notes.json.",
+    "earnings": 0.04,
+    "mna_target": 0.18,
+    "mna": 0.04,
+    "regulatory": 0.05,
+    "legal": 0.04,
+    "product": 0.025,
+    "leadership": 0.05,
+    "corporate_action": 0.03,
+    "bankruptcy": 0.4,
+    "index_inclusion": 0.05,
+    "macro_policy": 0.03,
+    "other": 0.03
+  }
+}
