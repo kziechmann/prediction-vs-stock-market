@@ -88,11 +88,29 @@ class LinkingTests(unittest.TestCase):
 
     def test_multi_company_and_proxy(self):
         self.assertEqual(self.tickers("Will Paramount acquire Warner Bros. Discovery?"), ["PSKY", "WBD"])
-        links = INDEX.link_market({"question": "Will OpenAI IPO before 2027?"})
+        links = INDEX.link_market({"question": "Will OpenAI IPO before 2027?"})  # still private
         self.assertEqual([link.ticker for link in links], ["MSFT"])
         self.assertLess(links[0].weight, 1)
         # A direct match beats a proxy.
         self.assertEqual(self.tickers("Will Microsoft and OpenAI renegotiate?"), ["MSFT"])
+
+    def test_tickers_written_in_market_text(self):
+        links = INDEX.link_market({"question": "What will Acme Rockets Inc. (ACMR) hit week of Nov 16?"})
+        self.assertEqual([(l.ticker, l.name, l.dynamic) for l in links], [("ACMR", "Acme Rockets Inc.", True)])
+        self.assertEqual(self.tickers("Will Bitcoin (BTC) hit $150k?"), [])
+        self.assertEqual(self.tickers("Will the new memecoin (FROG) list on Binance?"), [])
+        self.assertEqual(self.tickers("Will the US (USA) win gold?"), [])
+        # A dictionary match takes precedence over text-detected tickers.
+        self.assertEqual(self.tickers("Will Opendoor Technologies (OPEN) hit $2?"), ["OPEN"])
+        self.assertFalse(INDEX.link_market({"question": "Opendoor (OPEN) above $2?"})[0].dynamic)
+
+    def test_names_agree(self):
+        self.assertTrue(matching.names_agree("Acme Rockets Inc.", "ACME Rockets Corporation"))
+        self.assertFalse(matching.names_agree("Pump.fun", "ProPetro Holding Corp."))
+
+    def test_newly_listed(self):
+        self.assertEqual(self.tickers("Will Anthropic close below its IPO price?"), ["ANT"])
+        self.assertEqual(self.tickers("Will Starship reach orbit on flight 12?"), ["SPCX"])
 
     def test_event_title_fallback_only_when_unambiguous(self):
         self.assertEqual(self.tickers("↑ $250", event_title="What price will Tesla hit in December?"), ["TSLA"])
@@ -276,6 +294,7 @@ class FetchFallbackTests(unittest.TestCase):
 
         self.net.get = fake
         events, status = polymarket.fetch_events(max_events=300, tag_slugs=["stocks"], max_per_tag=100)
+        self.assertTrue(all(c.get("limit", 0) <= 50 for c in calls))  # API rejects larger pages
         self.assertTrue(status["ok"])
         self.assertEqual(status["order"], "volume24hr")
         self.assertEqual(len(events), 2)
@@ -287,6 +306,31 @@ class FetchFallbackTests(unittest.TestCase):
         events, status = polymarket.fetch_events(max_events=100)
         self.assertFalse(status["ok"])
         self.assertIn("403", status["error"])
+
+    def test_rate_limit_waits_then_succeeds(self):
+        import io, urllib.error, urllib.request
+        calls = {"n": 0}
+        real_urlopen, real_sleep = urllib.request.urlopen, self.net.time.sleep
+        slept = []
+
+        class Resp(io.BytesIO):
+            headers = {"x-ratelimit-remaining": "550", "x-ratelimit-cost": "50", "x-ratelimit-reset": "1"}
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+
+        def fake_urlopen(req, timeout=None):
+            calls["n"] += 1
+            if calls["n"] <= 2:
+                raise urllib.error.HTTPError(req.full_url, 429, "too many", {"x-ratelimit-reset": "0.01"}, None)
+            return Resp(b'{"ok": true}')
+
+        urllib.request.urlopen = fake_urlopen
+        self.net.time.sleep = lambda s: slept.append(s)
+        try:
+            self.assertEqual(self.real_get("https://example.test/x", retries=1), {"ok": True})
+        finally:
+            urllib.request.urlopen, self.net.time.sleep = real_urlopen, real_sleep
+        self.assertEqual(calls["n"], 3)  # two 429s waited out without using the single retry
 
     def test_kalshi_series_path_then_paged_fallback(self):
         def series_ok(url, params=None, **kw):

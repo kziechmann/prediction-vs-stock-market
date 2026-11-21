@@ -74,7 +74,6 @@ def fetch_events(series_categories=(), max_series: int = 400, max_pages: int = 6
                 cursor = data.get("cursor")
                 if not cursor:
                     break
-            time.sleep(0.05)
         if events:
             status = {"ok": True, "mode": "series", "series": min(len(series), max_series), "events": len(events)}
             if warnings:

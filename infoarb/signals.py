@@ -396,6 +396,8 @@ def build(markets: list[dict], stocks: dict, index: matching.CompanyIndex, notes
             counts["noise"] += 1
         for link in links:
             st, hist = stats.get(link.ticker), stocks.get(link.ticker)
+            if st is None and link.dynamic:
+                continue  # a "(XYZ)" in the text that didn't check out as a listed stock
             base = _base_row(m, link, category, st, note, noise)
             if st is None:
                 counts["no_stock_data"] += 1

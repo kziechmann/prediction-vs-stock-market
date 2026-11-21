@@ -11,7 +11,7 @@ from . import net
 from .util import fnum, iso, json_list, parse_time
 
 GAMMA = "https://gamma-api.polymarket.com"
-PAGE = 100
+PAGE = 50  # the Gamma API answers HTTP 406 to limit > 50 (checked Nov 2026)
 # Tried in order; the first one the API accepts is used for the whole run.
 ORDER_FIELDS = ("volume1wk", "volume24hr", "volume")
 

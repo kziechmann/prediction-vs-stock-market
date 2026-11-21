@@ -103,7 +103,14 @@ The scanner needs these hosts (all public, no API keys):
 - `gamma-api.polymarket.com` (Polymarket markets)
 - `api.elections.kalshi.com` (Kalshi markets and price history)
 - `query1.finance.yahoo.com`, `query2.finance.yahoo.com` (stock prices)
-- `stooq.com` (fallback stock prices)
+- `stooq.com` (fallback stock prices; optional, and its connection drops from the cloud sandbox)
+
+Claude Code cloud sessions for this repo use the personal environment `bankstatement_script`,
+which allows exactly these hosts. The weekly scheduled task runs there too.
+
+API notes (checked Nov 2026): Polymarket's Gamma API rejects page sizes over 50 (HTTP 406).
+Kalshi rate-limits by a points budget (600 points; a nested-markets page costs 50) and the client
+waits out its `x-ratelimit-*` headers; paging all ~22k open Kalshi events takes about a minute.
 
 In a Claude Code cloud session, add them under the environment's network settings
 (Allowed domains). If they are blocked, the scanner exits with code 2 or 3 and the weekly
@@ -122,8 +129,10 @@ analyst's position-level calls out of the public brief.
 
 - Realized vol is a yardstick, not an options price. Expect apparent edges on price
   bets right before earnings; check implied vol before trading them.
-- Polymarket's 7-day change is its own field; Kalshi's comes from daily candles for
-  linked markets only.
+- Polymarket's 7- and 30-day changes are its own fields; Kalshi's come from daily candles
+  for linked markets only (up to `max_history_calls` per scan).
+- Tickers written in market text ("Opendoor Technologies Inc. (OPEN)") are picked up
+  automatically, but only kept when Yahoo's company name matches the text.
 - Holidays aren't in the trading-day count.
 - Kalshi volume is in contracts ($1 max payout each), Polymarket's in dollars.
 - Linking is regex-based. The analyst's `mapping-error` verdicts are how it improves;

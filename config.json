@@ -20,24 +20,22 @@
     },
     "kalshi": {
       "enabled": true,
-      "series_categories": [
-        "Companies",
-        "Financials",
-        "Tech & Science",
-        "Science and Technology",
-        "Health"
-      ],
+      "series_categories": [],
       "max_series": 400,
-      "max_pages": 60,
+      "max_pages": 200,
       "skip_categories": [
         "Sports",
-        "Climate and Weather"
+        "Elections",
+        "Entertainment",
+        "Climate and Weather",
+        "Mentions"
       ],
       "skip_series_prefixes": [
         "KXMVE"
       ],
       "max_history_calls": 150,
-      "taker_fee_rate": 0.07
+      "taker_fee_rate": 0.07,
+      "_doc": "Kalshi: page every open event (200 per page) and skip categories that never map to stocks. series_categories, if set, fetches per series instead (slow: thousands of series)."
     },
     "stocks": {
       "benchmark": "SPY",

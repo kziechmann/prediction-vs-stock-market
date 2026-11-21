@@ -37,8 +37,10 @@ def _yahoo(symbol: str, range_: str) -> dict:
             lo = fnum((quote.get("low") or [None] * len(ts))[i], c)
             rows.append((datetime.fromtimestamp(t, tz=timezone.utc).date().isoformat(), c, h, lo))
         meta = result.get("meta") or {}
-        return _pack(symbol, rows, "yahoo", fnum(meta.get("regularMarketPrice")),
-                     meta.get("currency"), meta.get("longName") or meta.get("shortName"))
+        out = _pack(symbol, rows, "yahoo", fnum(meta.get("regularMarketPrice")),
+                    meta.get("currency"), meta.get("longName") or meta.get("shortName"))
+        out["kind"] = meta.get("instrumentType")
+        return out
     raise last or net.FetchError(f"yahoo:{symbol}", "unreachable")
 
 

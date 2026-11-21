@@ -18,6 +18,18 @@ class Link:
     via: str               # the alias that matched
     pos: int               # character offset of the match in the question text
     proxy_note: str | None = None
+    dynamic: bool = False  # ticker read from "(TICKER)"/"$TICKER" text, not from companies.json
+
+
+# Tickers written in market text, e.g. "Opendoor Technologies Inc. (OPEN)" or "$OPEN".
+DYN_PAREN = re.compile(r"([A-Z][\w.&'’-]*(?:\s+[A-Z&][\w.&'’-]*){0,5})\s*\(([A-Z]{1,5}(?:\.[A-Z])?)\)")
+DYN_DOLLAR = re.compile(r"\$([A-Z]{2,5})\b")
+CRYPTO_CONTEXT = re.compile(r"crypto|token|\bcoin\b|memecoin|bitcoin|ethereum|solana|blockchain|airdrop|\bfdv\b", re.I)
+NOT_TICKERS = set("""US USA UK EU UN AI AGI GDP CPI PCE PPI FED FOMC ECB BOE BOJ NFP NFL NBA WNBA MLB NHL MLS UFC WWE PGA
+ETF IPO CEO CFO CTO SEC FDA DOJ FTC FCC CDC WHO NATO OPEC IMF WTI BTC ETH SOL XRP DOGE ADA BNB USDT USDC TRX LTC HYPE SUI
+PEPE LINK AVAX DOT SHIB TON NEAR APT ARB OP ENA PUMP WLFI TRUMP NYC LA DC GOP DNC RNC MAGA TV PM AM ET PT UTC EST PST EDT PDT
+YES NO ATH EV EVS OK II III IV VI VII AFC NFC ACC EPL UCL MVP COVID ICE IRS EPA DHS DOD NASA SCOTUS APEC BRICS ESPN HBO
+CNN BBC NPR CBS ABC NBC TBD TBA ID IQ OTC NYSE CEST CET GMT""".split())
 
 
 class CompanyIndex:
@@ -59,6 +71,15 @@ class CompanyIndex:
             prev = found.get(c["ticker"])
             if prev is None or link.weight > prev.weight:
                 found[c["ticker"]] = link
+        if not any(link.weight >= 1 for link in found.values()) and not CRYPTO_CONTEXT.search(text):
+            for m in DYN_PAREN.finditer(text):
+                t = m.group(2)
+                if t not in NOT_TICKERS and t not in found:
+                    found[t] = Link(t, m.group(1).strip(), 1.0, f"({t})", m.start(2), None, dynamic=True)
+            for m in DYN_DOLLAR.finditer(text):
+                t = m.group(1)
+                if t not in NOT_TICKERS and t not in found:
+                    found[t] = Link(t, t, 1.0, f"${t}", m.start(1), None, dynamic=True)
         links = list(found.values())
         if any(link.weight >= 1 for link in links):
             links = [link for link in links if link.weight >= 1]
@@ -72,6 +93,17 @@ class CompanyIndex:
             if len(ev) == 1:
                 links = ev
         return links
+
+
+NAME_STOP = {"inc", "corp", "corporation", "company", "co", "ltd", "plc", "holdings", "holding", "group",
+             "technologies", "technology", "the", "class", "common", "stock", "shares", "and", "will", "what"}
+
+
+def names_agree(a: str | None, b: str | None) -> bool:
+    """Do two company names share a meaningful word? Used to vet tickers read from market text."""
+    def words(x):
+        return {w for w in re.findall(r"[a-z0-9]+", (x or "").lower()) if len(w) >= 3 and w not in NAME_STOP}
+    return bool(words(a) & words(b))
 
 
 def load_index(path: Path) -> CompanyIndex:
