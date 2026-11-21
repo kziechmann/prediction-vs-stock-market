@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 from infoarb import kalshi, polymarket, signals, stocks, track
-from infoarb.matching import load_index
+from infoarb.matching import load_index, names_agree
 from infoarb.themes import load_themes
 from infoarb.util import iso, utcnow
 
@@ -71,15 +71,33 @@ def fetch_inputs(cfg: dict, index, themes, snapshots: list, now) -> dict:
         print(f"kalshi: {status}", file=sys.stderr)
 
     tickers = {cfg["sources"]["stocks"]["benchmark"]}
+    dynamic: dict[str, str] = {}  # tickers read from market text -> the company name written there
     for m in markets:
-        tickers.update(link.ticker for link in index.link_market(m))
+        for link in index.link_market(m):
+            tickers.add(link.ticker)
+            if link.dynamic:
+                dynamic.setdefault(link.ticker, link.name)
         tickers.update(tm.theme.vehicle for tm in themes.match(m))
     tickers |= track.tickers_in(snapshots, 70, now.date())
     sc = cfg["sources"]["stocks"]
     hist, errors = stocks.fetch_many(tickers, sc["history_range"], sc["request_pause_seconds"])
+    # Keep a ticker read from market text only if it is a real stock whose name matches the text.
+    verified, rejected = {}, {}
+    for t, name in dynamic.items():
+        h = hist.get(t)
+        if h is None:
+            errors.pop(t, None)
+            rejected[t] = "no price data"
+        elif h.get("kind") not in (None, "EQUITY", "ETF") or not names_agree(name, h.get("name")):
+            rejected[t] = f"name mismatch: market says {name!r}, Yahoo says {h.get('name')!r}"
+            hist.pop(t)
+        else:
+            verified[t] = h.get("name")
     sources["stocks"] = {"ok": bool(hist), "tickers": len(hist), "failed": len(errors),
-                         "errors": dict(list(errors.items())[:10])}
-    print(f"stocks: {len(hist)} ok, {len(errors)} failed", file=sys.stderr)
+                         "errors": dict(list(errors.items())[:10]),
+                         "detected_tickers": {"verified": verified, "rejected": dict(list(rejected.items())[:20])}}
+    print(f"stocks: {len(hist)} ok, {len(errors)} failed; detected tickers: {len(verified)} verified, "
+          f"{len(rejected)} rejected", file=sys.stderr)
     for m in markets:
         m["description"] = (m.get("description") or "")[:300]
     return {"fetched_at": iso(now), "markets": markets, "stocks": hist, "sources": sources}
