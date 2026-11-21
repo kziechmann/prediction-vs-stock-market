@@ -47,6 +47,8 @@ def rounded(obj, nd=5):
 
 
 def fetch_inputs(cfg: dict, index, themes, snapshots: list, now) -> dict:
+    import time
+    t0 = time.time()
     src_cfg = cfg["sources"]
     markets, sources = [], {}
     if src_cfg["polymarket"]["enabled"]:
@@ -56,7 +58,7 @@ def fetch_inputs(cfg: dict, index, themes, snapshots: list, now) -> dict:
         status["markets"] = len(pm)
         sources["polymarket"] = status
         markets += pm
-        print(f"polymarket: {status}", file=sys.stderr)
+        print(f"polymarket: {status} [{time.time() - t0:.0f}s]", file=sys.stderr)
     if src_cfg["kalshi"]["enabled"]:
         kc = src_cfg["kalshi"]
         events, status = kalshi.fetch_events(kc["series_categories"], kc["max_series"], kc["max_pages"],
@@ -68,7 +70,7 @@ def fetch_inputs(cfg: dict, index, themes, snapshots: list, now) -> dict:
                                                                 cfg["event_signal"]["windows"]))
         sources["kalshi"] = status
         markets += km
-        print(f"kalshi: {status}", file=sys.stderr)
+        print(f"kalshi: {status} [{time.time() - t0:.0f}s]", file=sys.stderr)
 
     tickers = {cfg["sources"]["stocks"]["benchmark"]}
     dynamic: dict[str, str] = {}  # tickers read from market text -> the company name written there
@@ -81,26 +83,37 @@ def fetch_inputs(cfg: dict, index, themes, snapshots: list, now) -> dict:
     tickers |= track.tickers_in(snapshots, 70, now.date())
     sc = cfg["sources"]["stocks"]
     hist, errors = stocks.fetch_many(tickers, sc["history_range"], sc["request_pause_seconds"])
-    # Keep a ticker read from market text only if it is a real stock whose name matches the text.
-    verified, rejected = {}, {}
-    for t, name in dynamic.items():
-        h = hist.get(t)
-        if h is None:
-            errors.pop(t, None)
-            rejected[t] = "no price data"
-        elif h.get("kind") not in (None, "EQUITY", "ETF") or not names_agree(name, h.get("name")):
-            rejected[t] = f"name mismatch: market says {name!r}, Yahoo says {h.get('name')!r}"
-            hist.pop(t)
-        else:
-            verified[t] = h.get("name")
+    protected = {cfg["sources"]["stocks"]["benchmark"]} | set(index.names) | themes.vehicles() | \
+        track.tickers_in(snapshots, 70, now.date())
+    verified, rejected = vet_detected_tickers({t: n for t, n in dynamic.items() if t not in protected}, hist, errors)
     sources["stocks"] = {"ok": bool(hist), "tickers": len(hist), "failed": len(errors),
                          "errors": dict(list(errors.items())[:10]),
                          "detected_tickers": {"verified": verified, "rejected": dict(list(rejected.items())[:20])}}
     print(f"stocks: {len(hist)} ok, {len(errors)} failed; detected tickers: {len(verified)} verified, "
-          f"{len(rejected)} rejected", file=sys.stderr)
+          f"{len(rejected)} rejected [{time.time() - t0:.0f}s]", file=sys.stderr)
     for m in markets:
         m["description"] = (m.get("description") or "")[:300]
     return {"fetched_at": iso(now), "markets": markets, "stocks": hist, "sources": sources}
+
+
+def vet_detected_tickers(detected: dict, hist: dict, errors: dict) -> tuple[dict, dict]:
+    """Keep a ticker read from market text only if it is a listed stock whose name matches the text.
+
+    Mutates `hist` (drops rejected tickers) and `errors` (unknown symbols aren't source failures).
+    Never pass tickers the scan needs for other reasons (benchmark, dictionary, theme ETFs).
+    """
+    verified, rejected = {}, {}
+    for t, name in detected.items():
+        h = hist.get(t)
+        if h is None:
+            errors.pop(t, None)
+            rejected[t] = "no price data"
+        elif h.get("kind") not in (None, "EQUITY") or not names_agree(name, h.get("name")):
+            rejected[t] = f"not a matching stock: market says {name!r}, Yahoo says {h.get('name')!r} ({h.get('kind')})"
+            hist.pop(t)
+        else:
+            verified[t] = h.get("name")
+    return verified, rejected
 
 
 def candidates_md(result: dict, generated: str) -> str:

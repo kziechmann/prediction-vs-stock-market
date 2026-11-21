@@ -104,6 +104,13 @@ class LinkingTests(unittest.TestCase):
         self.assertEqual(self.tickers("Will Opendoor Technologies (OPEN) hit $2?"), ["OPEN"])
         self.assertFalse(INDEX.link_market({"question": "Opendoor (OPEN) above $2?"})[0].dynamic)
 
+    def test_detection_only_in_finance_contexts(self):
+        party = {"question": "Will the Sweden Democrats (SD) win the most seats?", "tags": ["Politics", "Elections"]}
+        self.assertEqual(INDEX.link_market(party), [])
+        self.assertEqual(self.tickers("Will Angie Craig (D) win MN-02?"), [])
+        stock = {"question": "What will Zscaler (ZS) hit in December?", "tags": ["Stocks"]}
+        self.assertEqual([l.ticker for l in INDEX.link_market(stock)], ["ZS"])
+
     def test_names_agree(self):
         self.assertTrue(matching.names_agree("Acme Rockets Inc.", "ACME Rockets Corporation"))
         self.assertFalse(matching.names_agree("Pump.fun", "ProPetro Holding Corp."))
@@ -226,8 +233,28 @@ class PriceParseTests(unittest.TestCase):
         self.assertIsNone(self.parse("Will Tesla report revenue above $30 billion?"))
         self.assertIsNone(self.parse("Will the FDA approve the drug?"))
 
+    def test_metric_markets_are_not_price_bets(self):
+        # All seen live on Kalshi/Polymarket in Nov 2026 and previously misparsed as share prices.
+        for q, kw in [
+            ("Will Coca-Cola Point of Sale Growth for November 2026 be above 100 ?", {"strike_type": "greater", "floor_strike": 100}),
+            ("Will Disney+ app downloads for November 2026 be above 97 ?", {"strike_type": "greater", "floor_strike": 97}),
+            ("How many launches will SpaceX have in 2026? — Above 140", {"strike_type": "greater", "floor_strike": 140}),
+            ("Will Southwest Airlines report above $220 average passenger fare in fiscal 2026?", {}),
+            ("Will the lowest price of any MacBook model on Apple.com be below $650 on November 30?", {}),
+        ]:
+            self.assertIsNone(self.parse(q, **kw), q)
+
+    def test_hit_high_low_format(self):
+        c = self.parse("Will NVIDIA (NVDA) hit (HIGH) $200 in November?", outcome_label="↑ $200")
+        self.assertEqual((c["kind"], c["side"], c["level"]), ("touch", "up", 200))
+        c = self.parse("Will NVIDIA (NVDA) hit (LOW) $120 in November?", outcome_label="↓ $120")
+        self.assertEqual((c["kind"], c["side"], c["level"]), ("touch", "down", 120))
+        c = self.parse("Anthropic closes below IPO price ($83) by...?", outcome_label="December 31")
+        self.assertEqual((c["kind"], c["side"], c["level"]), ("terminal", "below", 83))
+
     def test_kalshi_strikes(self):
-        c = self.parse("Apple price on Dec 31", strike_type="between", floor_strike=240, cap_strike=250)
+        c = self.parse("Apple price on Dec 31", strike_type="between", floor_strike=240, cap_strike=250,
+                       description="If the closing price of Apple (AAPL) on Dec 31 is between...")
         self.assertEqual((c["kind"], c["level"], c["level_hi"]), ("range", 240, 250))
 
 
@@ -457,6 +484,31 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(keys[0], "polymarket:mv")          # biggest move ranks first
         self.assertIn("polymarket:u1", keys)                # the Japan election market also qualifies
         self.assertNotIn("polymarket:n1", keys)             # linked/noise markets never appear here
+
+    def test_touch_window_starts_at_market_creation(self):
+        hist = fixtures.price_history("NVDA", NOW.date(), 180, 0.4, seed=12)
+        hist["high"] = [200.0] * len(hist["high"])
+        # Put a $250 high on Nov 3, before a market created Nov 5.
+        i = hist["dates"].index("2026-11-03")
+        hist["high"][i] = 250.0
+        m = fixtures.market(id="h", question="Will NVIDIA (NVDA) hit (HIGH) $240 in November?",
+                            start_date="2026-11-05T17:40:51Z", end_date="2026-12-01T05:00:00Z", prob=0.01)
+        cond = {"kind": "touch", "side": "up", "level": 240.0, "monitoring": "intraday"}
+        self.assertFalse(signals._already_touched(m, cond, hist, NOW))
+        hist["high"][hist["dates"].index("2026-11-09")] = 250.0
+        self.assertTrue(signals._already_touched(m, cond, hist, NOW))
+
+    def test_detected_ticker_vetting_spares_nothing_it_shouldnt(self):
+        import scan
+        hist = {"ZS": {"name": "Zscaler, Inc.", "kind": "EQUITY"}, "S": {"name": "SentinelOne, Inc.", "kind": "EQUITY"},
+                "DAX": {"name": "Global X DAX Germany ETF", "kind": "ETF"}}
+        errors = {"FL": "no data"}
+        ok, bad = scan.vet_detected_tickers({"ZS": "Zscaler", "S": "Swedish Social Democratic Party",
+                                             "DAX": "DAX", "FL": "Florida"}, hist, errors)
+        self.assertEqual(set(ok), {"ZS"})
+        self.assertEqual(set(bad), {"S", "DAX", "FL"})
+        self.assertEqual(set(hist), {"ZS"})
+        self.assertEqual(errors, {})
 
     def test_track_record(self):
         snap = {"date": (NOW.date() - timedelta(days=7)).isoformat(), "opportunities": [

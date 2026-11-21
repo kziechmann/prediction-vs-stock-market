@@ -29,7 +29,18 @@ NOT_TICKERS = set("""US USA UK EU UN AI AGI GDP CPI PCE PPI FED FOMC ECB BOE BOJ
 ETF IPO CEO CFO CTO SEC FDA DOJ FTC FCC CDC WHO NATO OPEC IMF WTI BTC ETH SOL XRP DOGE ADA BNB USDT USDC TRX LTC HYPE SUI
 PEPE LINK AVAX DOT SHIB TON NEAR APT ARB OP ENA PUMP WLFI TRUMP NYC LA DC GOP DNC RNC MAGA TV PM AM ET PT UTC EST PST EDT PDT
 YES NO ATH EV EVS OK II III IV VI VII AFC NFC ACC EPL UCL MVP COVID ICE IRS EPA DHS DOD NASA SCOTUS APEC BRICS ESPN HBO
-CNN BBC NPR CBS ABC NBC TBD TBA ID IQ OTC NYSE CEST CET GMT""".split())
+CNN BBC NPR CBS ABC NBC TBD TBA ID IQ OTC NYSE CEST CET GMT HIGH LOW FC SC AC CF DAX DJIA SPX NDX VIX
+FTSE NIKKEI KOSPI""".split())
+FINANCE_TAGS = {"stocks", "business", "finance", "tech", "earnings", "ipos", "ipo", "economy", "companies",
+                "financials", "big tech", "ai", "science and technology", "equities"}
+STOCK_WORDS = re.compile(r"\bstocks?\b|\bshares?\b|share price|stock price|market cap|\bipo\b|\bearnings\b|"
+                         r"\bclos(e|es|ed|ing)\b|\b(hit|reach|dip)\b", re.I)
+
+
+def finance_context(market: dict) -> bool:
+    tags = {str(t).lower() for t in market.get("tags") or []}
+    text = " ".join(x for x in (market.get("question"), market.get("event_title")) if x)
+    return bool(tags & FINANCE_TAGS) or bool(STOCK_WORDS.search(text))
 
 
 class CompanyIndex:
@@ -54,7 +65,7 @@ class CompanyIndex:
         return {"ticker": ticker, "name": name, "ci": ci, "cs": csr, "tick": tick,
                 "weight": weight, "note": note, "proxy": proxy}
 
-    def find(self, text: str) -> list[Link]:
+    def find(self, text: str, allow_detected: bool = False) -> list[Link]:
         found: dict[str, Link] = {}
         for c in self.companies:
             best = None
@@ -71,10 +82,10 @@ class CompanyIndex:
             prev = found.get(c["ticker"])
             if prev is None or link.weight > prev.weight:
                 found[c["ticker"]] = link
-        if not any(link.weight >= 1 for link in found.values()) and not CRYPTO_CONTEXT.search(text):
+        if allow_detected and not any(link.weight >= 1 for link in found.values()) and not CRYPTO_CONTEXT.search(text):
             for m in DYN_PAREN.finditer(text):
                 t = m.group(2)
-                if t not in NOT_TICKERS and t not in found:
+                if len(t) >= 2 and t not in NOT_TICKERS and t not in found:
                     found[t] = Link(t, m.group(1).strip(), 1.0, f"({t})", m.start(2), None, dynamic=True)
             for m in DYN_DOLLAR.finditer(text):
                 t = m.group(1)
@@ -87,7 +98,7 @@ class CompanyIndex:
 
     def link_market(self, market: dict) -> list[Link]:
         specific = " ".join(x for x in (market.get("question"), market.get("outcome_label")) if x)
-        links = self.find(specific)
+        links = self.find(specific, allow_detected=finance_context(market))
         if not links:
             ev = self.find(market.get("event_title") or "")
             if len(ev) == 1:
@@ -115,7 +126,8 @@ def load_index(path: Path) -> CompanyIndex:
 NOISE = [
     (re.compile(r"\b(say|says|said|mention|mentions|mentioned|tweet|tweets|tweeted|posts?|posted|word)\b"), "mention/post count"),
     (re.compile(r"year in search|most searched|\bsearched\b|#1 (free )?app|top free app|app store|google play|most streamed|wrapped|top (song|artist|album)|box office|opening weekend|rotten tomatoes|youtube views|subscribers on youtube"), "popularity ranking"),
-    (re.compile(r"best ai model|top ai model|ai model (is|be) (best|#1|top)|lmarena|chatbot arena|text arena|\barena\b"), "AI leaderboard"),
+    (re.compile(r"best ai model|top ai model|ai model (is|be) (best|#1|top)|lmarena|chatbot arena|text arena|\barena\b|"
+                r"humanity.s last exam|frontiermath|arc-agi|swe-bench|benchmark score"), "AI leaderboard"),
 ]
 
 CATEGORY_RULES = [
@@ -195,9 +207,22 @@ AMT = r"\$\s?(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)"
 MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august",
           "september", "october", "november", "december"]
 
+HIT_HL = re.compile(r"\b(hit|hits|reach|reaches)\s*\((high|low)\)\s*" + AMT)
+METRIC_WORDS = re.compile(r"download|launch|\bsales\b|growth|point of sale|\bfares?\b|deliver|revenue|subscriber|"
+                          r"\busers\b|\bunits\b|ticket|gas price|price of any|lowest price|highest price of|average price|"
+                          r"\bmsrp\b|retail price|\bcost\b|salary|\brent\b|home price|metascore|\bscore\b|rating|"
+                          r"followers|\bviews\b|streams|box office|\beps\b|guidance|market cap|valuation|"
+                          r"\bgdp\b|inflation|\bcpi\b|unemployment|interest rate|bitcoin|ethereum|\bgold\b|\boil\b")
+PRICE_CONTEXT = re.compile(r"\bstocks?\b|\bshares?\b|share price|stock price|closing price|"
+                           r"\bclos(e|es|ed|ing)\b\s*(above|below|at|between|under|over|higher|lower)|"
+                           r"\(([A-Z]{2,5}(?:\.[A-Z])?)\)|\$[A-Z]{2,5}\b|\b(finish|end|trade)s?\s*(above|below)|"
+                           r"\bwhat price\b|\bprice will\b|"
+                           r"\b(hit|hits|reach|reaches|dip|dips|fall|falls|drop|drops)\s*(to\s*)?\$|"
+                           r"\b(be|is|close|trade|finish|end)\s+(above|below|over|under)\s*\$", re.I)
 TOUCH_UP = re.compile(r"\b(reach|reaches|hit|hits|rise to|rises to|climb to|surpass|surpasses|exceed|exceeds|break above|trade above|go above)\b\s*(?:a high of\s*)?" + AMT)
 TOUCH_DOWN = re.compile(r"\b(dip to|dips to|fall to|falls to|drop to|drops to|sink to|sinks to|fall below|falls below|drop below|drops below|go below|trade below|hit a low of)\b\s*" + AMT)
 RANGE = re.compile(r"(?:between\s*)?" + AMT + r"\s*(?:-|–|to|and)\s*" + AMT)
+CLOSE_REL = re.compile(r"\b(?:close|closes|closed|trade|trades)\s+(above|below)\s+(?:its\s+|the\s+)?[a-z ]{0,24}?\(?" + AMT)
 ABOVE = re.compile(r"(close above|closes above|close at or above|at or above|above|over|higher than|greater than|≥|>)\s*" + AMT)
 BELOW = re.compile(r"(close below|closes below|close at or below|at or below|below|under|lower than|less than|≤|<)\s*" + AMT)
 LABEL = re.compile(r"^\s*(↑|↓|>|<|≥|≤|above|below)?\s*\$?\s?(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s*(\+|or more|or higher|or less|or lower)?\s*$", re.I)
@@ -218,6 +243,11 @@ def parse_price_condition(market: dict) -> dict | None:
     text = f"{q} {label}".lower()
     if re.search(r"market cap|market value|trillion|billion|revenue|earnings|eps\b|deliver", text):
         return None
+    raw = f"{q} {label} {market.get('event_title') or ''}"
+    if METRIC_WORDS.search(raw.lower()):
+        return None  # a business metric or another asset, not this company's share price
+    if not (PRICE_CONTEXT.search(raw) or PRICE_CONTEXT.search((market.get("description") or "")[:400])):
+        return None  # no sign the threshold is a share price
     monitoring = "close" if re.search(r"\bclos(e|es|ing)\b", text + " " + (market.get("description") or "").lower()[:300]) else "intraday"
 
     st = (market.get("strike_type") or "").lower()
@@ -230,6 +260,10 @@ def parse_price_condition(market: dict) -> dict | None:
         if st == "between" and lo and hi:
             return {"kind": "range", "side": "between", "level": lo, "level_hi": hi, "monitoring": "close"}
 
+    m = HIT_HL.search(text)
+    if m:
+        return {"kind": "touch", "side": "up" if m.group(2) == "high" else "down", "level": _num(m.group(3)),
+                "monitoring": monitoring}
     m = TOUCH_UP.search(text)
     if m:
         return {"kind": "touch", "side": "up", "level": _num(m.group(2)), "monitoring": monitoring}
@@ -255,6 +289,9 @@ def parse_price_condition(market: dict) -> dict | None:
         a, b = sorted((_num(m.group(1)), _num(m.group(2))))
         if b > a:
             return {"kind": "range", "side": "between", "level": a, "level_hi": b, "monitoring": "close"}
+    m = CLOSE_REL.search(text)
+    if m:
+        return {"kind": "terminal", "side": m.group(1), "level": _num(m.group(2)), "monitoring": "close"}
     m = ABOVE.search(text)
     if m:
         return {"kind": "terminal", "side": "above", "level": _num(m.group(2)), "monitoring": "close"}

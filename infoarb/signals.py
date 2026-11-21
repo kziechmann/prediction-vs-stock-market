@@ -29,7 +29,7 @@ Ranking preferences (config "preferences"):
 from __future__ import annotations
 
 import math
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from . import matching, quant
 from .util import clamp, parse_time
@@ -165,12 +165,16 @@ def _bullish_prob(cond: dict, p: float) -> float:
 
 
 def _already_touched(m: dict, cond: dict, hist: dict, now: datetime) -> bool:
+    # Touches only count inside the market's window: from the later of the named month's start
+    # and the market's creation (Polymarket: "at any point after market creation and during ...").
     month = matching.window_start_month(m.get("question", ""), now.date())
+    sd = parse_time(m.get("start_date"))
+    starts = [sd.date().isoformat()] if sd else []
     if month and month == now.month:
-        start = date(now.year, month, 1).isoformat()
-    else:
-        sd = parse_time(m.get("start_date"))
-        start = sd.date().isoformat() if sd else now.date().isoformat()
+        starts.append(date(now.year, month, 1).isoformat())
+    start = max(starts) if starts else now.date().isoformat()
+    if sd and sd.date().isoformat() == start:
+        start = (sd.date() + timedelta(days=1)).isoformat()  # creation-day bar may predate the market
     series = hist["close"] if cond["monitoring"] == "close" else (hist["high"] if cond["side"] == "up" else hist["low"])
     for d, v in zip(hist["dates"], series):
         if d < start or v is None:
