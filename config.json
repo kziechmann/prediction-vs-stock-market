@@ -4,16 +4,38 @@
     "polymarket": {
       "enabled": true,
       "max_events": 1500,
-      "tag_slugs": ["stocks", "business", "earnings", "tech", "finance", "economy", "ipos", "big-tech", "ai", "companies"],
+      "tag_slugs": [
+        "stocks",
+        "business",
+        "earnings",
+        "tech",
+        "finance",
+        "economy",
+        "ipos",
+        "big-tech",
+        "ai",
+        "companies"
+      ],
       "max_events_per_tag": 300
     },
     "kalshi": {
       "enabled": true,
-      "series_categories": ["Companies", "Financials", "Tech & Science", "Science and Technology", "Health"],
+      "series_categories": [
+        "Companies",
+        "Financials",
+        "Tech & Science",
+        "Science and Technology",
+        "Health"
+      ],
       "max_series": 400,
       "max_pages": 60,
-      "skip_categories": ["Sports", "Climate and Weather"],
-      "skip_series_prefixes": ["KXMVE"],
+      "skip_categories": [
+        "Sports",
+        "Climate and Weather"
+      ],
+      "skip_series_prefixes": [
+        "KXMVE"
+      ],
       "max_history_calls": 150,
       "taker_fee_rate": 0.07
     },
@@ -27,7 +49,43 @@
     "min_volume_any": 2000,
     "min_volume_event": 20000,
     "min_volume_price": 5000,
-    "min_confidence": 0.25
+    "min_confidence": 0.25,
+    "min_volume_unlinked_mover": 250000,
+    "min_move_unlinked_mover": 0.1
+  },
+  "preferences": {
+    "_doc": "Ranking preferences. Final score = base score x horizon weight x theme boost. Horizon weight interpolates [days to resolution, weight] pairs, so short-dated trades rank lower. A trade with a very large delta (price edge >= large_delta.price_edge, or an unpriced stock move >= large_delta.unpriced_move) keeps full weight even if short-dated.",
+    "horizon_weights": [
+      [
+        0,
+        0.35
+      ],
+      [
+        7,
+        0.45
+      ],
+      [
+        30,
+        0.7
+      ],
+      [
+        90,
+        1.0
+      ],
+      [
+        180,
+        1.1
+      ],
+      [
+        365,
+        1.15
+      ]
+    ],
+    "large_delta": {
+      "price_edge": 0.2,
+      "unpriced_move": 0.05
+    },
+    "theme_boost": 1.35
   },
   "price_signal": {
     "min_edge": 0.06,
@@ -36,12 +94,22 @@
     "vol_multiplier": 1.0,
     "min_trading_days": 0.25,
     "max_trading_days": 400,
-    "skip_market_prob_outside": [0.02, 0.98]
+    "skip_market_prob_outside": [
+      0.02,
+      0.98
+    ]
   },
   "event_signal": {
-    "window_days": 7,
-    "min_prob_change": 0.05,
+    "windows": [
+      7,
+      30
+    ],
+    "min_prob_change": {
+      "7": 0.05,
+      "30": 0.08
+    },
     "gap_unit": 0.01,
+    "max_expected_move": 0.25,
     "unknown_direction_weight": 0.5
   },
   "ranking": {

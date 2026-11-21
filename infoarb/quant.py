@@ -140,29 +140,27 @@ def prob_touch(s0: float, barrier: float, sigma: float, t_years: float, mu: floa
     return min(1.0, max(0.0, p))
 
 
-def stock_stats(hist: dict, bench: dict | None, today: date, window_days: int = 7,
+def stock_stats(hist: dict, bench: dict | None, today: date, windows=(7, 30),
                 short_weight: float = 0.5) -> dict:
+    """Volatility, beta and per-window raw / beta-adjusted abnormal returns vs the benchmark."""
     closes, dates = hist["close"], hist["dates"]
     vol = blended_vol(closes, short_weight)
-    ret = window_return(dates, closes, window_days, today)
-    bench_ret = window_return(bench["dates"], bench["close"], window_days, today) if bench else None
     b = beta(closes, bench["close"]) if bench else None
     b_used = min(2.5, max(0.3, b)) if b is not None else 1.0
-    abn = (ret - b_used * bench_ret) if (ret is not None and bench_ret is not None) else None
     daily = vol / math.sqrt(TRADING_DAYS) if vol else None
-    window_sd = daily * math.sqrt(max(1.0, window_days * 5 / 7)) if daily else None
-    return {
-        "symbol": hist["symbol"],
-        "name": hist.get("name"),
-        "price": hist["price"],
-        "as_of": hist["as_of"],
-        "source": hist["source"],
-        "vol_ann": vol,
-        "ret_window": ret,
-        "bench_ret_window": bench_ret,
-        "beta": b,
-        "abn_ret_window": abn,
-        "window_sd": window_sd,
-        "abn_z": (abn / window_sd) if (abn is not None and window_sd) else None,
-        "spark": closes[-30:],
+    out = {
+        "symbol": hist["symbol"], "name": hist.get("name"), "price": hist["price"], "as_of": hist["as_of"],
+        "source": hist["source"], "vol_ann": vol, "beta": b, "spark": closes[-30:], "windows": {},
     }
+    for w in windows:
+        ret = window_return(dates, closes, w, today)
+        bret = window_return(bench["dates"], bench["close"], w, today) if bench else None
+        abn = (ret - b_used * bret) if (ret is not None and bret is not None) else None
+        sd = daily * math.sqrt(max(1.0, w * 5 / 7)) if daily else None
+        out["windows"][str(w)] = {"ret": ret, "bench_ret": bret, "abn": abn, "sd": sd,
+                                  "z": (abn / sd) if (abn is not None and sd) else None}
+    w7 = out["windows"].get("7", {})
+    out.update(ret_window=w7.get("ret"), bench_ret_window=w7.get("bench_ret"),
+               abn_ret_window=w7.get("abn"), window_sd=w7.get("sd"), abn_z=w7.get("z"),
+               abn_30=(out["windows"].get("30") or {}).get("abn"))
+    return out

@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta, timezone
 
 
 def price_history(symbol: str, end: date, start_price: float, vol: float, days: int = 130,
-                  seed: int = 1, last_week_return: float | None = None) -> dict:
+                  seed: int = 1, last_week_return: float | None = None, forced_days: int = 7) -> dict:
     rng = random.Random(seed)
     dates, closes = [], []
     d = end - timedelta(days=int(days * 7 / 5) + 10)
@@ -20,8 +20,8 @@ def price_history(symbol: str, end: date, start_price: float, vol: float, days: 
             closes.append(px)
         d += timedelta(days=1)
     if last_week_return is not None:
-        # Force the final week's move: rescale the last 5 closes onto a straight path.
-        base_idx = max(i for i, s in enumerate(dates) if s <= (end - timedelta(days=7)).isoformat())
+        # Force the final `forced_days` move onto a straight path from the close before it.
+        base_idx = max(i for i, s in enumerate(dates) if s <= (end - timedelta(days=forced_days)).isoformat())
         base = closes[base_idx]
         n = len(closes) - 1 - base_idx
         for k in range(1, n + 1):
@@ -48,10 +48,12 @@ def build_inputs(now: datetime) -> dict:
     today = now.date()
     end_30 = (now + timedelta(days=30)).replace(hour=21, minute=0, second=0, microsecond=0)
     stocks = {
-        "SPY": price_history("SPY", today, 600, 0.15, seed=11, last_week_return=0.0),
+        "SPY": price_history("SPY", today, 600, 0.15, seed=11, last_week_return=0.0, forced_days=31),
+        "SMH": price_history("SMH", today, 300, 0.30, seed=17, last_week_return=0.0, forced_days=31),
         "NVDA": price_history("NVDA", today, 180, 0.45, seed=12),
         "TTWO": price_history("TTWO", today, 240, 0.30, seed=13, last_week_return=0.0),
         "AAPL": price_history("AAPL", today, 230, 0.25, seed=14),
+        "PFE": price_history("PFE", today, 25, 0.25, seed=18, last_week_return=0.0),
         "WBD": price_history("WBD", today, 20, 0.40, seed=15, last_week_return=0.0),
         "PSKY": price_history("PSKY", today, 15, 0.45, seed=16, last_week_return=0.0),
     }
@@ -73,6 +75,17 @@ def build_inputs(now: datetime) -> dict:
         # Unrelated market: must not link.
         market(id="u1", question="Will there be a snap election in Japan before 2027?", prob=0.3,
                prob_change_7d=0.2, end_date=(now + timedelta(days=60)).isoformat()),
+        # Theme: chip export controls tightening over 30 days (two separate events), SMH flat -> short SMH.
+        market(id="t1", event_id="t1", question="Will the US ban Nvidia H20 chip sales to China in 2026?", prob=0.6,
+               prob_change_7d=0.03, prob_change_30d=0.25, end_date=(now + timedelta(days=120)).isoformat()),
+        market(id="t2", event_id="t2", question="Will the US allow Nvidia to sell H200 chips to China?", prob=0.2,
+               prob_change_7d=-0.01, prob_change_30d=-0.15, end_date=(now + timedelta(days=120)).isoformat()),
+        # Theme-only market whose ETF has no price data -> watchlist, no signal.
+        market(id="t3", event_id="t3", question="Will marijuana be rescheduled to Schedule III in 2026?", prob=0.4,
+               prob_change_30d=0.10, end_date=(now + timedelta(days=150)).isoformat()),
+        # Short-dated event with a modest gap: down-weighted by the horizon preference.
+        market(id="s1", event_id="s1", question="Will the FDA approve Pfizer's new obesity drug by December 5?",
+               prob=0.7, prob_change_7d=0.20, end_date=(now + timedelta(days=5)).isoformat()),
         # Kalshi structured strike, fairly priced -> evaluated, not flagged.
         market(platform="kalshi", id="KXAAPL-1", question="Apple stock price on Dec 31",
                series_ticker="KXAAPL", ticker="KXAAPL-1", prob=0.5, bid=0.49, ask=0.51,

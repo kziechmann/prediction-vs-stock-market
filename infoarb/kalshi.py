@@ -151,6 +151,7 @@ def normalize(events: list, fee_rate: float = 0.07) -> list[dict]:
                 "ask": ask,
                 "prob_change_1d": (last - prev) if (last is not None and prev) else None,
                 "prob_change_7d": None,  # filled by enrich_history for linked markets
+                "prob_change_30d": None,
                 "volume_total": _qty(m, "volume") or 0.0,
                 "volume_24h": _qty(m, "volume_24h"),
                 "volume_7d": None,
@@ -169,10 +170,13 @@ def normalize(events: list, fee_rate: float = 0.07) -> list[dict]:
     return out
 
 
-def enrich_history(markets: list[dict], max_calls: int = 150, window_days: int = 7) -> dict:
-    """Fill prob_change_7d from daily candlesticks for the given (already linked) markets."""
+def enrich_history(markets: list[dict], max_calls: int = 150, windows=(7, 30)) -> dict:
+    """Fill prob_change_<w>d from daily candlesticks for the given (already linked) markets.
+
+    If a market is younger than a window, the change is measured from its first candle.
+    """
     now = int(utcnow().timestamp())
-    start = now - (window_days + 2) * 86400
+    start = now - (max(windows) + 2) * 86400
     calls = ok = 0
     for m in markets:
         if m.get("platform") != "kalshi" or calls >= max_calls:
@@ -183,19 +187,16 @@ def enrich_history(markets: list[dict], max_calls: int = 150, window_days: int =
             data = net.get(url, {"start_ts": start, "end_ts": now, "period_interval": 1440}, retries=2)
         except net.FetchError:
             continue
-        candles = data.get("candlesticks") or []
-        target = now - window_days * 86400
-        base = None
-        for c in candles:
-            ts = fnum(c.get("end_period_ts"), 0)
-            p = _candle_price(c)
-            if p is None:
-                continue
-            if ts <= target or base is None:
-                base = p
-        if base is not None:
-            m["prob_change_7d"] = m["prob"] - base
-            ok += 1
+        points = [(fnum(c.get("end_period_ts"), 0), _candle_price(c)) for c in data.get("candlesticks") or []]
+        points = sorted((t, p) for t, p in points if p is not None)
+        if not points:
+            continue
+        for w in windows:
+            target = now - w * 86400
+            before = [p for t, p in points if t <= target]
+            base = before[-1] if before else points[0][1]
+            m[f"prob_change_{w}d"] = m["prob"] - base
+        ok += 1
         time.sleep(0.1)
     return {"history_calls": calls, "history_ok": ok}
 

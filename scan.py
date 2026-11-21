@@ -23,6 +23,7 @@ from pathlib import Path
 
 from infoarb import kalshi, polymarket, signals, stocks, track
 from infoarb.matching import load_index
+from infoarb.themes import load_themes
 from infoarb.util import iso, utcnow
 
 ROOT = Path(__file__).resolve().parent
@@ -45,7 +46,7 @@ def rounded(obj, nd=5):
     return obj
 
 
-def fetch_inputs(cfg: dict, index, snapshots: list, now) -> dict:
+def fetch_inputs(cfg: dict, index, themes, snapshots: list, now) -> dict:
     src_cfg = cfg["sources"]
     markets, sources = [], {}
     if src_cfg["polymarket"]["enabled"]:
@@ -61,9 +62,10 @@ def fetch_inputs(cfg: dict, index, snapshots: list, now) -> dict:
         events, status = kalshi.fetch_events(kc["series_categories"], kc["max_series"], kc["max_pages"],
                                              kc["skip_categories"], kc["skip_series_prefixes"])
         km = kalshi.normalize(events, kc["taker_fee_rate"])
-        linked_k = [m for m in km if index.link_market(m)]
+        linked_k = [m for m in km if index.link_market(m) or themes.match(m)]
+        linked_k.sort(key=lambda m: m.get("volume_total") or 0, reverse=True)
         status.update(markets=len(km), **kalshi.enrich_history(linked_k, kc["max_history_calls"],
-                                                                cfg["event_signal"]["window_days"]))
+                                                                cfg["event_signal"]["windows"]))
         sources["kalshi"] = status
         markets += km
         print(f"kalshi: {status}", file=sys.stderr)
@@ -71,6 +73,7 @@ def fetch_inputs(cfg: dict, index, snapshots: list, now) -> dict:
     tickers = {cfg["sources"]["stocks"]["benchmark"]}
     for m in markets:
         tickers.update(link.ticker for link in index.link_market(m))
+        tickers.update(tm.theme.vehicle for tm in themes.match(m))
     tickers |= track.tickers_in(snapshots, 70, now.date())
     sc = cfg["sources"]["stocks"]
     hist, errors = stocks.fetch_many(tickers, sc["history_range"], sc["request_pause_seconds"])
@@ -85,28 +88,52 @@ def fetch_inputs(cfg: dict, index, snapshots: list, now) -> dict:
 def candidates_md(result: dict, generated: str) -> str:
     lines = [f"# Candidates for analyst review — {generated}", "",
              "Each row's `key` is what analysis/notes.json uses. Prob/edge in probability points.", ""]
+    themes = [r for r in result["theme_signals"]][:10]
+    if themes:
+        lines += ["## Themes (sector-wide; ranked first by preference)", "",
+                  "| key | theme | ETF | window | implied | ETF vs SPY | priced in | score | top markets |",
+                  "|---|---|---|---|---|---|---|---|---|"]
+        for r in themes:
+            tops = "; ".join(f"[{c['question'][:60]}]({c['url']}) {c['dp']:+.0%}" for c in r["markets"][:3])
+            lines.append(f"| `{r['key']}` | {r['company']} | {r['ticker']} | {r['window']}d | {r['expected_move']:+.1%} | "
+                         f"{r['abn_return']:+.1%} | {r['priced_fraction']:.0%} | {r['score']:.2f} | {tops} |")
+        lines.append("")
     lines += ["## Flagged opportunities", "",
-              "| # | key | ticker | signal | question | prob | Δ7d | stock abn 7d | model / edge | score |",
+              "Score = base × horizon weight × theme boost. Short-dated rows are down-weighted unless the delta is very large (exempt).", "",
+              "| # | key | ticker | signal | question | prob | Δ odds | stock abn | model / gap | score (base×hz×boost) |",
               "|---|---|---|---|---|---|---|---|---|---|"]
 
     def pct(x, signed=False):
         return "—" if x is None else (f"{x:+.1%}" if signed else f"{x:.0%}")
 
     for r in result["opportunities"]:
-        model = f"{r['model_prob']:.0%} / {r['edge']:+.2f}" if r["signal"] == "price" else f"gap {r['gap_z']:+.1f}σ" if r.get("gap_z") is not None else "dir?"
+        if r["signal"] == "price":
+            model, dodds, abn = f"{r['model_prob']:.0%} / edge {r['edge']:+.2f}", pct(r.get("prob_change_7d"), True), pct(r.get("stock_abn_7d"), True)
+        else:
+            model = f"gap {pct(r['gap'], True)}, {r['priced_fraction']:.0%} priced" if r.get("gap") is not None else "dir?"
+            dodds, abn = f"{pct(r.get('prob_change'), True)} ({r.get('window')}d)", pct(r.get("abn_return"), True)
         q = r["question"].replace("|", "/")[:110]
+        sc = f"{r['score']:.2f} ({r['score_base']:.2f}×{r['horizon_weight']:.2f}×{r['boost']:.2f}{', exempt' if r.get('exempt') else ''})"
         lines.append(f"| {r['rank']} | `{r['key']}` | {r['ticker']} | {r['signal']}/{r['category']} | [{q}]({r['url']}) | "
-                     f"{pct(r['prob'])} | {pct(r.get('prob_change_7d'), True)} | {pct(r.get('stock_abn_7d'), True)} | {model} | {r['score']:.2f} |")
+                     f"{pct(r['prob'])} | {dodds} | {abn} | {model} | {sc} |")
     lines += ["", "Readings:", ""]
     for r in result["opportunities"]:
         lines.append(f"- **#{r['rank']} {r['ticker']}** — {r['reading']} → {r['action']}")
     need = [r for r in result["event_signals"] if not r.get("direction")][:15]
     if need:
         lines += ["", "## Big odds moves that need a direction call", "",
-                  "| key | ticker | category | question | prob | Δ7d | stock abn 7d |", "|---|---|---|---|---|---|---|"]
+                  "| key | ticker | category | question | prob | Δ odds | stock abn |", "|---|---|---|---|---|---|---|"]
         for r in need:
             lines.append(f"| `{r['key']}` | {r['ticker']} | {r['category']} | [{r['question'][:110]}]({r['url']}) | "
-                         f"{pct(r['prob'])} | {pct(r.get('prob_change_7d'), True)} | {pct(r.get('stock_abn_7d'), True)} |")
+                         f"{pct(r['prob'])} | {pct(r.get('prob_change'), True)} ({r.get('window')}d) | {pct(r.get('abn_return'), True)} |")
+    movers = result.get("unlinked_movers") or []
+    if movers:
+        lines += ["", "## Big movers with no company or theme link (possible new trends)", "",
+                  "Skim for anything with a stock-market angle; add a theme to themes.json if it recurs.", "",
+                  "| question | prob | Δ7d | Δ30d | volume | tags |", "|---|---|---|---|---|---|"]
+        for r in movers[:20]:
+            lines.append(f"| [{r['question'][:100]}]({r['url']}) | {pct(r['prob'])} | {pct(r.get('prob_change_7d'), True)} | "
+                         f"{pct(r.get('prob_change_30d'), True)} | {r['volume_total']:,.0f} | {', '.join((r.get('tags') or [])[:3])} |")
     return "\n".join(lines) + "\n"
 
 
@@ -121,6 +148,7 @@ def main(argv=None) -> int:
 
     cfg = load_json(ROOT / "config.json", None)
     index = load_index(ROOT / "companies.json")
+    themes = load_themes(ROOT / "themes.json")
     notes = load_json(args.notes, {"markets": {}, "tickers": {}})
     out = args.out
     (out / "cache").mkdir(parents=True, exist_ok=True)
@@ -135,7 +163,7 @@ def main(argv=None) -> int:
             print(f"no inputs at {path}; run a live scan first", file=sys.stderr)
             return 2
     else:
-        inputs = fetch_inputs(cfg, index, snaps, now)
+        inputs = fetch_inputs(cfg, index, themes, snaps, now)
 
     if not any(s.get("ok") for k, s in inputs["sources"].items() if k != "stocks"):
         print("no prediction-market source was reachable:", json.dumps(inputs["sources"]), file=sys.stderr)
@@ -146,14 +174,15 @@ def main(argv=None) -> int:
     if not (args.inputs or args.rescore):
         (out / "cache" / "inputs.json").write_text(json.dumps(inputs))
 
-    result = signals.build(inputs["markets"], inputs["stocks"], index, notes, cfg, now)
+    result = signals.build(inputs["markets"], inputs["stocks"], index, notes, cfg, now, themes=themes)
     bench = cfg["sources"]["stocks"]["benchmark"]
     today = now.date()
     prior = [s for s in snaps if s.get("date") != today.isoformat()]
     by_key = {m["key"]: m for m in inputs["markets"]}
     record = track.evaluate(prior, by_key, result["stocks"], bench, today)
 
-    used = {r["ticker"] for k in ("opportunities", "price_signals", "event_signals", "watchlist") for r in result[k]}
+    used = {r["ticker"] for k in ("opportunities", "theme_signals", "price_signals", "event_signals", "watchlist")
+            for r in result[k]}
     used |= {r["ticker"] for r in record["rows"]} | {bench}
     latest = {
         "generated_at": iso(now),
@@ -161,11 +190,15 @@ def main(argv=None) -> int:
         "benchmark": bench,
         "sources": inputs["sources"],
         "counts": result["counts"],
-        "config": {k: cfg[k] for k in ("filters", "price_signal", "event_signal", "ranking")},
+        "config": {k: cfg[k] for k in ("filters", "preferences", "price_signal", "event_signal", "ranking",
+                                       "impact_defaults")},
+        "themes_tracked": [{"id": t.id, "name": t.name, "sector": t.sector, "vehicle": t.vehicle} for t in themes.themes],
         "opportunities": result["opportunities"],
+        "theme_signals": result["theme_signals"],
         "price_signals": result["price_signals"][:200],
         "event_signals": result["event_signals"][:200],
         "watchlist": result["watchlist"],
+        "unlinked_movers": result["unlinked_movers"],
         "track_record": record,
         "stocks": {k: v for k, v in result["stocks"].items() if k in used},
     }
@@ -179,8 +212,9 @@ def main(argv=None) -> int:
     c = result["counts"]
     print(f"scanned {c['markets']} markets, linked {c['linked']}, "
           f"{len(result['opportunities'])} opportunities "
-          f"({sum(1 for r in result['opportunities'] if r['signal'] == 'price')} price, "
-          f"{sum(1 for r in result['opportunities'] if r['signal'] == 'event')} event)")
+          f"({sum(1 for r in result['opportunities'] if r['signal'] == 'theme')} theme, "
+          f"{sum(1 for r in result['opportunities'] if r['signal'] == 'event')} event, "
+          f"{sum(1 for r in result['opportunities'] if r['signal'] == 'price')} price)")
     return 0
 
 

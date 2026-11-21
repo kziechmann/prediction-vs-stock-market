@@ -2,23 +2,33 @@
 
 A weekly scanner that looks for "information arbitrage" between prediction markets and
 the stock market: places where the crowd on Polymarket or Kalshi has moved on something
-about a listed company, and the company's stock hasn't.
+about a listed company or a whole industry, and the stocks haven't. It favors sector-wide
+and longer-dated trends over short-term trades, unless a short-term gap is very large.
 
 Each week it:
 
 1. pulls the most-traded open markets from **Polymarket** and **Kalshi** (volume and
    liquidity are the confidence measure),
 2. links each market to a listed company via `companies.json` (names, products, CEOs,
-   tickers; a few private companies map to listed shareholders at reduced weight),
-3. pulls six months of daily prices for every linked stock plus SPY,
-4. scores two kinds of divergence (below), and
-5. writes a ranked list, a dashboard, and a snapshot for tracking how the calls do.
+   tickers; a few private companies map to listed shareholders at reduced weight) and to
+   industry themes via `themes.json` (each measured against a sector ETF),
+3. pulls six months of daily prices for every linked stock and ETF plus SPY,
+4. scores three kinds of divergence (below) and ranks them by your preferences, and
+5. writes a ranked list, a dashboard with a methodology section, and a snapshot for
+   tracking how the calls do.
 
 A scheduled Claude agent then reviews the top candidates (news, resolution rules,
 direction and size of impact), writes a short brief, and publishes the dashboard. Its
 instructions are in [`AGENT.md`](AGENT.md).
 
-## The two signals
+## The three signals
+
+**Sector themes.** Markets about an industry-wide development (chip export controls, drug
+pricing, crypto legislation, cannabis rescheduling, tariffs, defense spending, Fannie/Freddie,
+and so on; 15 themes in `themes.json`). Every market in a theme is netted into one expected
+move for the theme's ETF (direction × odds change × impact, summed), then compared with the
+ETF's beta-adjusted return vs SPY. Big odds moves that match no company or theme are listed
+for the analyst as possible new themes.
 
 **Price bets.** Markets on the share price itself: "NVDA above $200 on Dec 31",
 "TSLA hits $500 in December", Kalshi price ranges. The same contract is priced from the
@@ -28,16 +38,31 @@ the rules use closing prices). Edge = stock-implied probability minus what you'd
 (ask for YES, 1 − bid for NO), net of Kalshi's fee. The analyst can replace realized vol
 with options-implied vol per ticker, which matters around earnings.
 
-**Event odds.** Earnings, approvals, deals, lawsuits, leadership, product launches, index
-inclusion. Over the last 7 days:
+**Company events.** Earnings, approvals, deals, lawsuits, leadership, product launches,
+index inclusion. Over 7 and 30 days (whichever gap is larger), for themes and events alike:
 
 ```
-expected move = direction × Δ probability × impact      (impact = stock move if YES fully resolves)
-gap           = expected move − stock's beta-adjusted return vs SPY
-score         = |gap| / 1% × confidence
+expected move = direction × Δ probability × impact   (impact = move if YES fully resolves)
+unpriced gap  = the part of the expected move the stock or ETF hasn't made yet
+                (0 if it already moved that far; capped at the expected move if it moved the other way)
+priced in     = 1 − |gap| / |expected move|
+base score    = |gap| / 1% × confidence
 ```
 
-`gap / weekly σ` is shown alongside so you can tell a real gap from ordinary noise.
+## Ranking preferences
+
+```
+score = base × horizon weight × theme boost
+```
+
+- **Horizon weight** by days until the market resolves: ×0.35 now, ×0.45 at a week, ×0.70 at
+  a month, ×1.0 at 90 days, up to ×1.15 at a year.
+- **Very large deltas are exempt** and keep full weight: contract edge ≥ 20 pts or unpriced
+  move ≥ 5%.
+- **Themes get ×1.35.**
+
+All of these live in `config.json` → `preferences`, and the dashboard's methodology section
+reads them from each scan's data, so the page always shows the numbers actually used.
 Direction and impact start as keyword heuristics plus the defaults in `config.json`. The
 weekly analyst overrides them in `analysis/notes.json`, and those overrides persist.
 
@@ -67,8 +92,9 @@ python3 info_arb/tests/test_infoarb.py   # offline tests
 | `site/index.html` | Self-contained dashboard (any static host) |
 | `site/artifact.html` | Same page without the document shell, for a claude.ai Artifact |
 
-Tune thresholds in `config.json`; add companies or aliases in `companies.json` (avoid
-aliases that are common words: Target, Block, Snap, Visa, Ford).
+Tune thresholds and preferences in `config.json`; add companies or aliases in
+`companies.json` (avoid aliases that are common words: Target, Block, Snap, Visa, Ford); add
+themes in `themes.json` (precise patterns, a liquid sector ETF as the vehicle).
 
 ## Network access
 

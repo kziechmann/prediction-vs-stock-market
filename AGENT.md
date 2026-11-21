@@ -5,6 +5,13 @@ mechanically; your job is the judgment it can't make: is the link right, which w
 the event cut, how big is it, has the stock already moved on it, and is the contract's
 fine print a trap. Then write a short brief a trader can act on, and publish the dashboard.
 
+**The owner's priorities.** Favor sector-wide themes and large, slower trends that the
+stock market hasn't priced yet over short-term trades. A short-dated idea (resolving within
+about a month) belongs in the brief only if its delta is very large: the scanner marks
+these `exempt` (contract edge ≥ 20 pts, or unpriced stock move ≥ 5%). The ranking already
+applies this (horizon weight × theme boost, see `config.json` → `preferences`); your review
+order and the brief should follow it too.
+
 All paths below are relative to the repository root. Work on the branch named in
 `info_arb/BRANCH` (create nothing else; push only there).
 
@@ -30,11 +37,27 @@ python3 info_arb/scan.py
 
 ## 2. Review the candidates
 
-Read `info_arb/data/candidates.md`. Review every flagged row (up to ~15) plus the
-"needs a direction call" rows with the biggest odds moves (up to ~8). For detail on a
-row, look it up by `key` in `info_arb/data/latest.json`.
+Read `info_arb/data/candidates.md`. Review in this order, and spend most of your time on
+the first two:
 
-For each one:
+1. **Themes** (the "Themes" table, keys `theme:<id>`). For each, check every netted market
+   (listed in `latest.json` → `theme_signals[].markets`): is it really about this theme, and
+   is its direction right (does YES help or hurt the sector ETF)? Fix a market with
+   `markets.<key>.direction` / `impact_pct`, or drop it with `ignore`. Then judge the theme
+   as a whole: is the ETF the right vehicle, which basket members are most exposed, has the
+   sector already moved for this reason before the window? Record `themes.<id>.verdict`,
+   `thesis` and, if the default is off, `impact_pct`.
+2. **Long-dated company events** (flagged event rows resolving more than ~1 month out),
+   plus the "needs a direction call" rows with the biggest odds moves (up to ~8).
+3. **Short-dated rows** only if marked exempt (very large delta). Skip the rest.
+4. **Big movers with no link** (bottom of candidates.md): skim for trends with a
+   stock-market angle the scanner doesn't cover. If one is material and has a clear sector
+   ETF, add a theme to `info_arb/themes.json` (same shape as the others; precise regex
+   patterns, no common words) and say so in the brief. Otherwise mention it under Watching.
+
+For detail on any row, look it up by `key` in `info_arb/data/latest.json`.
+
+For each candidate:
 
 1. **Link.** Is this market really about that listed company, and does it matter to the
    stock? Proxy links (e.g. OpenAI → MSFT) are weak by design. Wrong link → set
@@ -69,7 +92,9 @@ Record everything in `info_arb/analysis/notes.json` (schema in its `_doc` field)
 python3 info_arb/scan.py --rescore
 ```
 
-Check that the ranking now reflects your calls (ignored rows gone, directions applied).
+Check that the ranking now reflects your calls (ignored rows gone, directions applied). If you
+added a theme in step 2, run the full `python3 info_arb/scan.py` again instead, since the new
+ETF needs price data.
 
 ## 4. Write the brief
 
@@ -77,13 +102,19 @@ Create `info_arb/analysis/briefs/YYYY-MM-DD.md` (today's UTC date) in this shape
 
 ```markdown
 ## Bottom line
-Two or three sentences: how many real opportunities this week and the single best one.
+Two or three sentences: the biggest unpriced trend this week and the single best idea.
 
-## Top ideas
-1. **$TICKER — short title.** Trade: e.g. "Buy YES at 31¢ on Polymarket" or "Long TICKER
-   vs SPY". Why: the gap in numbers from the scan. Catalyst and timing. Risk / what would
-   prove it wrong. Links: [market](...) · [news](...)
-(up to 5)
+## Sector themes and trends
+1. **$ETF — theme.** Trade: e.g. "Short SMH, or underweight NVDA/AMD vs SPY". Why: the
+   netted odds moves and how much is priced in, in numbers from the scan. Catalyst and
+   timing. Risk / what would prove it wrong. Links: [top market](...) · [news](...)
+(up to 3)
+
+## Company ideas
+Same shape, longer-dated first (up to 3).
+
+## Short-term, very large deltas only
+Only rows the scanner marked exempt; leave the section out if there are none.
 
 ## Watching
 - One line each: real but not yet tradeable, and what would make it tradeable.
@@ -96,7 +127,7 @@ One short paragraph on how earlier calls are doing (from the dashboard's track r
 ```
 
 Rules: every number must come from `latest.json` or a source you link. Say "not
-investment advice" once at the end. Keep it under ~500 words.
+investment advice" once at the end. Keep it under ~600 words.
 
 ## 5. Render
 
@@ -108,7 +139,7 @@ python3 info_arb/render.py
 
 ```bash
 git add info_arb/data/latest.json info_arb/data/candidates.md info_arb/data/snapshots \
-        info_arb/analysis info_arb/site
+        info_arb/analysis info_arb/site info_arb/themes.json
 git commit -m "Weekly info-arb scan $(date -u +%F)"
 git push -u origin "$(cat info_arb/BRANCH)"
 ```

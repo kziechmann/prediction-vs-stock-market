@@ -16,8 +16,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import fixtures  # noqa: E402
 from infoarb import kalshi, matching, mdlite, polymarket, quant, signals, track  # noqa: E402
+from infoarb.themes import load_themes  # noqa: E402
 
 INDEX = matching.load_index(ROOT / "companies.json")
+THEMES = load_themes(ROOT / "themes.json")
 CFG = json.loads((ROOT / "config.json").read_text())
 NOW = datetime(2026, 11, 18, 15, 0, tzinfo=timezone.utc)  # a Wednesday, market open
 
@@ -125,6 +127,60 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual(matching.classify("Will Tim Cook step down as CEO in 2026?"), "leadership")
         self.assertEqual(matching.classify("Tesla Up or Down on November 21?"), "up_down")
         self.assertEqual(matching.classify("Largest company in the world end of 2026?"), "market_cap")
+
+
+class PreferenceTests(unittest.TestCase):
+    def test_horizon_weight_interpolates(self):
+        prefs = CFG["preferences"]
+        self.assertAlmostEqual(signals.horizon_weight(0, prefs), prefs["horizon_weights"][0][1])
+        self.assertAlmostEqual(signals.horizon_weight(90, prefs), 1.0)
+        mid = signals.horizon_weight(18.5, prefs)
+        self.assertGreater(mid, signals.horizon_weight(7, prefs))
+        self.assertLess(mid, signals.horizon_weight(30, prefs))
+        self.assertAlmostEqual(signals.horizon_weight(10_000, prefs), prefs["horizon_weights"][-1][1])
+        self.assertEqual(signals.horizon_weight(None, prefs), 1.0)
+
+    def test_unpriced_gap(self):
+        self.assertEqual(signals.unpriced(0.05, 0.0), (0.05, 0.0))          # nothing priced
+        gap, pf = signals.unpriced(0.05, 0.02)
+        self.assertAlmostEqual(gap, 0.03); self.assertAlmostEqual(pf, 0.4)  # 40% priced
+        self.assertEqual(signals.unpriced(0.05, 0.08), (0.0, 1.0))          # overshot: priced in
+        self.assertEqual(signals.unpriced(0.05, -0.10), (0.05, 0.0))        # moved the other way: capped
+        gap, pf = signals.unpriced(-0.04, -0.01)
+        self.assertAlmostEqual(gap, -0.03); self.assertAlmostEqual(pf, 0.25)
+
+    def test_event_uses_thirty_day_window_when_only_trend_moved(self):
+        now = NOW
+        inputs = fixtures.build_inputs(now)
+        m = fixtures.market(id="w30", event_id="w30", question="Will Paramount acquire Warner Bros. Discovery?",
+                            prob=0.6, prob_change_7d=0.01, prob_change_30d=0.30,
+                            end_date=(now + timedelta(days=200)).isoformat())
+        res = signals.build([m], inputs["stocks"], INDEX, {}, CFG, now, themes=THEMES)
+        r = [r for r in res["event_signals"] if r["ticker"] == "WBD"][0]
+        self.assertEqual(r["window"], 30)
+
+
+class ThemeMatchTests(unittest.TestCase):
+    def match(self, q, **kw):
+        return {tm.theme.id: tm.direction for tm in THEMES.match({"question": q, **kw})}
+
+    def test_matches_and_directions(self):
+        self.assertEqual(self.match("Will the US allow Nvidia to sell H20 chips to China?"), {"chips_china": 1})
+        self.assertEqual(self.match("Will Trump impose tariffs on semiconductors by March?")["chips_china"], -1)
+        self.assertEqual(self.match("Will the Supreme Court rule the IEEPA tariffs unlawful?"), {"import_tariffs": 1})
+        self.assertEqual(self.match("Will Trump raise tariffs on China above 100%?"), {"import_tariffs": -1})
+        self.assertEqual(self.match("Will the CLARITY Act be signed into law in 2026?"), {"crypto_policy": 1})
+        self.assertEqual(self.match("Will marijuana be rescheduled in 2026?"), {"cannabis": 1})
+        self.assertEqual(self.match("Russia x Ukraine ceasefire in 2026?"), {"defense": -1})
+        self.assertEqual(self.match("Will Fannie Mae IPO in 2026?"), {"gse_release": 1})
+        self.assertEqual(self.match("Will 30-year mortgage rates fall below 6%?"), {"mortgage_rates": 1})
+
+    def test_event_title_counts_for_matching(self):
+        self.assertIn("chips_china", self.match("Yes", event_title="Nvidia H20 sales to China resumed by...?"))
+
+    def test_unrelated(self):
+        self.assertEqual(self.match("Will the Lakers win the NBA title?"), {})
+        self.assertEqual(self.match("Will Bitcoin hit $150k in 2026?"), {})
 
 
 class PriceParseTests(unittest.TestCase):
@@ -261,7 +317,8 @@ class PipelineTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.inputs = fixtures.build_inputs(NOW)
-        cls.result = signals.build(cls.inputs["markets"], cls.inputs["stocks"], INDEX, {"markets": {}, "tickers": {}}, CFG, NOW)
+        cls.result = signals.build(cls.inputs["markets"], cls.inputs["stocks"], INDEX, {"markets": {}, "tickers": {}},
+                                   CFG, NOW, themes=THEMES)
 
     def test_mispriced_price_bet_is_flagged_yes(self):
         rows = [r for r in self.result["price_signals"] if r["key"] == "polymarket:p1"]
@@ -304,13 +361,58 @@ class PipelineTests(unittest.TestCase):
     def test_analyst_notes_override_direction_and_ignore(self):
         notes = {"markets": {"polymarket:e2": {"direction": -1, "impact_pct": 0.08, "verdict": "watch", "thesis": "t"},
                              "polymarket:p1": {"ignore": True}}, "tickers": {}}
-        res = signals.build(self.inputs["markets"], self.inputs["stocks"], INDEX, notes, CFG, NOW)
+        res = signals.build(self.inputs["markets"], self.inputs["stocks"], INDEX, notes, CFG, NOW, themes=THEMES)
         e = [r for r in res["event_signals"] if r["key"] == "polymarket:e2"][0]
         self.assertEqual((e["direction"], e["direction_source"], e["stock_side"]), (-1, "analyst", -1))
         self.assertAlmostEqual(e["impact_pct"], 0.08)
         self.assertTrue(e["flagged"])
         self.assertEqual(e["analyst"]["verdict"], "watch")
         self.assertFalse(any(r["key"] == "polymarket:p1" for r in res["price_signals"]))
+
+    def test_theme_nets_markets_against_sector_etf(self):
+        rows = [r for r in self.result["theme_signals"] if r["key"] == "theme:chips_china"]
+        self.assertEqual(len(rows), 1)
+        r = rows[0]
+        self.assertEqual((r["ticker"], r["window"], r["stock_side"]), ("SMH", 30, -1))
+        # ban odds +25 pts (YES bad) and allow odds -15 pts (YES good) both point down
+        self.assertAlmostEqual(r["expected_move"], -(0.25 + 0.15) * 0.05, places=4)
+        self.assertAlmostEqual(r["priced_fraction"], 0.0, places=2)
+        self.assertEqual(r["boost"], CFG["preferences"]["theme_boost"])
+        self.assertTrue(r["flagged"])
+        self.assertEqual({c["key"] for c in r["markets"]}, {"polymarket:t1", "polymarket:t2"})
+
+    def test_theme_without_etf_data_goes_to_watchlist(self):
+        self.assertFalse(any(r["key"] == "theme:cannabis" for r in self.result["theme_signals"]))
+        self.assertIn("polymarket:t3", {r["key"] for r in self.result["watchlist"]})
+
+    def test_short_dated_event_is_down_weighted(self):
+        r = [r for r in self.result["event_signals"] if r["key"] == "polymarket:s1"][0]
+        self.assertLess(r["horizon_days"], 7)
+        self.assertLess(r["horizon_weight"], 0.5)
+        self.assertFalse(r["exempt"])
+        self.assertAlmostEqual(r["score"], r["score_base"] * r["horizon_weight"], places=2)
+
+    def test_large_price_edge_is_exempt_from_horizon_penalty(self):
+        r = [r for r in self.result["price_signals"] if r["key"] == "polymarket:p1"][0]
+        self.assertGreaterEqual(r["edge"], CFG["preferences"]["large_delta"]["price_edge"])
+        self.assertTrue(r["exempt"])
+        self.assertEqual(r["horizon_weight"], 1.0)
+
+    def test_themes_rank_ahead_of_similar_single_stock_gaps(self):
+        ranks = {(o["signal"], o["ticker"]): o["rank"] for o in self.result["opportunities"]}
+        self.assertIn(("theme", "SMH"), ranks)
+
+    def test_unlinked_big_movers_are_collected(self):
+        now = NOW
+        inputs = fixtures.build_inputs(now)
+        m = fixtures.market(id="mv", event_id="mv", question="Will the US government shut down again in January?",
+                            prob=0.55, prob_change_30d=0.30, volume_total=900_000.0,
+                            end_date=(now + timedelta(days=60)).isoformat())
+        res = signals.build(inputs["markets"] + [m], inputs["stocks"], INDEX, {}, CFG, now, themes=THEMES)
+        keys = [r["key"] for r in res["unlinked_movers"]]
+        self.assertEqual(keys[0], "polymarket:mv")          # biggest move ranks first
+        self.assertIn("polymarket:u1", keys)                # the Japan election market also qualifies
+        self.assertNotIn("polymarket:n1", keys)             # linked/noise markets never appear here
 
     def test_track_record(self):
         snap = {"date": (NOW.date() - timedelta(days=7)).isoformat(), "opportunities": [
@@ -342,7 +444,9 @@ class EndToEndTests(unittest.TestCase):
             code = scan.main(["--inputs", str(tmp / "inputs.json"), "--out", str(tmp / "data"), "--notes", str(notes)])
             self.assertEqual(code, 0)
             latest = json.loads((tmp / "data" / "latest.json").read_text())
-            self.assertGreaterEqual(len(latest["opportunities"]), 3)
+            self.assertGreaterEqual(len(latest["opportunities"]), 4)
+            self.assertTrue(any(o["signal"] == "theme" for o in latest["opportunities"]))
+            self.assertIn("## Themes", (tmp / "data" / "candidates.md").read_text())
             self.assertTrue((tmp / "data" / "candidates.md").read_text().startswith("# Candidates"))
             self.assertEqual(len(list((tmp / "data" / "snapshots").glob("*.json"))), 1)
             briefs = tmp / "briefs"

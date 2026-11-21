@@ -108,6 +108,7 @@ def normalize(events: list) -> list[dict]:
                 "ask": ask,
                 "prob_change_1d": fnum(m.get("oneDayPriceChange")),
                 "prob_change_7d": fnum(m.get("oneWeekPriceChange")),
+                "prob_change_30d": fnum(m.get("oneMonthPriceChange")),
                 "volume_total": volume or 0.0,
                 "volume_24h": fnum(m.get("volume24hr")),
                 "volume_7d": fnum(m.get("volume1wk")),

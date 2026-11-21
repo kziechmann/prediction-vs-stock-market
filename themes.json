@@ -1,0 +1,174 @@
+{
+  "_doc": "Industry and macro themes: prediction markets that move a whole sector rather than one company. 'patterns' are case-insensitive regexes matched against the question, outcome label and event title. 'vehicle' is the ETF used to measure whether the stock market has priced the theme (and to trade it); 'members' are the main stocks, shown for context. 'direction' is what a YES usually means for the vehicle (+1 good, -1 bad, 0 depends); 'positive'/'negative' regexes on the question override it. 'impact_pct' is the assumed vehicle move if a YES fully resolves; the weekly analyst can override it per market or per theme in analysis/notes.json.",
+  "themes": [
+    {
+      "id": "chips_china",
+      "name": "Chip export controls & semiconductor tariffs",
+      "sector": "Semiconductors",
+      "vehicle": "SMH",
+      "members": ["NVDA", "AMD", "AVGO", "TSM", "ASML", "MU", "QCOM", "INTC"],
+      "patterns": ["export control", "chip export", "export (ban|restriction)s? on .*chips", "\\bH20\\b", "\\bH200\\b", "(sell|selling|sales of) (advanced |ai )*chips to china", "chips? to china", "semiconductor (tariff|export)", "tariffs? on (semiconductors|chips)", "section 232 .*semiconductor"],
+      "direction": -1,
+      "positive": ["\\blift", "\\beas(e|es|ing)\\b", "\\ballow", "\\bpermit", "\\bresume", "\\bexempt", "approve[sd]? (sales|exports?)", "\\blicen[cs]e"],
+      "negative": ["\\bban", "restrict", "tariff", "\\bblock", "tighten"],
+      "impact_pct": 0.05
+    },
+    {
+      "id": "drug_pricing",
+      "name": "Drug pricing & pharma tariffs",
+      "sector": "Pharmaceuticals",
+      "vehicle": "PPH",
+      "members": ["LLY", "NVO", "JNJ", "MRK", "PFE", "ABBV", "BMY", "AMGN"],
+      "patterns": ["drug pric", "most[- ]favou?red[- ]nation", "\\bMFN\\b", "pharma(ceutical)? tariff", "tariffs? on (pharma|drugs|pharmaceuticals|branded drugs)", "medicare (drug )?(price )?negotiat", "glp-1 (coverage|price|pricing)", "trumprx"],
+      "direction": -1,
+      "positive": ["\\bexempt", "struck down", "strike down", "\\bblock(ed|s)?\\b", "\\bdelay", "\\bpause"],
+      "negative": ["\\bimpose", "tariff", "\\bcut", "\\blower"],
+      "impact_pct": 0.04
+    },
+    {
+      "id": "crypto_policy",
+      "name": "Crypto legislation & regulation",
+      "sector": "Crypto equities",
+      "vehicle": "BITQ",
+      "members": ["COIN", "HOOD", "CRCL", "MSTR", "GEMI", "MARA", "RIOT"],
+      "patterns": ["clarity act", "market structure (bill|legislation)", "genius act", "stablecoin (bill|act|law|legislation)", "(strategic )?bitcoin reserve", "crypto (bill|legislation|regulation|executive order)", "\\bsec\\b.*crypto", "crypto etf", "staking etf", "(solana|sol|xrp|doge|dogecoin|cardano|ada) etf"],
+      "direction": 1,
+      "negative": ["\\bban", "\\breject", "\\bden(y|ies|ied)", "crackdown", "\\bsue", "lawsuit"],
+      "impact_pct": 0.06
+    },
+    {
+      "id": "cannabis",
+      "name": "Cannabis rescheduling & banking",
+      "sector": "Cannabis",
+      "vehicle": "MSOS",
+      "members": ["TLRY", "CGC", "CURLF", "GTBIF"],
+      "patterns": ["marijuana", "cannabis", "safe banking", "schedule iii"],
+      "direction": 1,
+      "negative": ["\\breject", "\\bden(y|ies|ied)", "\\bfail", "\\bblock"],
+      "impact_pct": 0.25
+    },
+    {
+      "id": "defense",
+      "name": "Defense spending & war risk",
+      "sector": "Aerospace & defense",
+      "vehicle": "ITA",
+      "members": ["LMT", "RTX", "GE", "BA", "NOC", "GD"],
+      "patterns": ["defen[cs]e (budget|spending|bill)", "\\bndaa\\b", "nato .*(spending|5%|gdp)", "golden dome", "ukraine (ceasefire|peace)", "(ceasefire|peace deal|peace agreement).*(ukraine|russia)", "(russia|ukraine).*(ceasefire|peace deal|peace agreement)"],
+      "direction": 1,
+      "negative": ["ceasefire", "\\bpeace", "\\bcut"],
+      "impact_pct": 0.03
+    },
+    {
+      "id": "oil_supply",
+      "name": "Oil supply shocks",
+      "sector": "Energy",
+      "vehicle": "XLE",
+      "members": ["XOM", "CVX", "COP", "OXY", "SLB"],
+      "patterns": ["strait of hormuz", "\\bopec", "crude oil", "oil price", "\\bbrent\\b", "\\bwti\\b", "sanctions? on (russian|iranian|venezuelan) oil", "oil (embargo|supply)"],
+      "direction": 1,
+      "negative": ["\\bbelow", "\\bdip", "\\bfall", "\\bdrop", "\\blower", "ceasefire", "\\bpeace", "\\blift"],
+      "impact_pct": 0.04
+    },
+    {
+      "id": "gse_release",
+      "name": "Fannie Mae & Freddie Mac release",
+      "sector": "Housing finance",
+      "vehicle": "FNMA",
+      "members": ["FNMA", "FMCC"],
+      "patterns": ["fannie mae", "freddie mac", "\\bfannie\\b", "\\bfreddie\\b", "\\bgses?\\b", "conservatorship"],
+      "direction": 1,
+      "negative": ["\\bdelay", "\\bpostpone", "\\bcancel"],
+      "impact_pct": 0.25
+    },
+    {
+      "id": "aca_subsidies",
+      "name": "ACA subsidies & health insurers",
+      "sector": "Managed care",
+      "vehicle": "IHF",
+      "members": ["CNC", "OSCR", "MOH", "ELV", "UNH"],
+      "patterns": ["aca (subsid|tax credit|premium)", "affordable care act", "obamacare", "enhanced (premium )?(subsid|tax credit)", "medicaid (cut|work requirement)"],
+      "direction": 1,
+      "negative": ["\\bcut", "\\bexpire", "\\blapse", "work requirement", "\\brepeal"],
+      "impact_pct": 0.05
+    },
+    {
+      "id": "import_tariffs",
+      "name": "Broad import tariffs",
+      "sector": "Retail & importers",
+      "vehicle": "XRT",
+      "members": ["WMT", "COST", "NKE", "AMZN", "BBY", "DG"],
+      "patterns": ["reciprocal tariff", "\\bieepa\\b", "tariffs? on (china|chinese goods|mexico|canada|the eu|european|imports|all imports|india|vietnam)", "tariff (rate|refund|ruling)", "supreme court.*tariff", "tariff.*supreme court", "de minimis"],
+      "direction": -1,
+      "positive": ["struck down", "strike down", "\\billegal", "\\bunlawful", "\\brefund", "\\bpause", "\\blift", "\\bremove", "\\blower", "\\breduce", "\\bexempt", "trade deal"],
+      "impact_pct": 0.04
+    },
+    {
+      "id": "autos_ev",
+      "name": "EV credits & auto tariffs",
+      "sector": "Autos",
+      "vehicle": "CARZ",
+      "members": ["TSLA", "GM", "F", "RIVN", "LCID", "TM"],
+      "patterns": ["ev tax credit", "electric vehicle (tax )?credit", "auto tariff", "tariffs? on (cars|autos|vehicles|auto parts)", "\\bcafe standard", "vehicle emissions? (rule|standard)"],
+      "direction": 0,
+      "positive": ["\\bextend", "\\brestore", "\\bexempt", "\\blift", "\\bremove", "\\blower", "\\bpause"],
+      "negative": ["\\brepeal", "eliminat", "\\bimpose", "\\braise", "\\bend\\b"],
+      "impact_pct": 0.04
+    },
+    {
+      "id": "nuclear_power",
+      "name": "Nuclear & grid buildout",
+      "sector": "Power",
+      "vehicle": "NLR",
+      "members": ["CCJ", "OKLO", "SMR", "CEG", "VST"],
+      "patterns": ["nuclear (reactor|plant|power|energy|executive order)", "small modular reactor", "\\bsmrs?\\b", "\\buranium", "data cent(er|re) power", "power grid"],
+      "direction": 1,
+      "negative": ["\\bban", "shut ?down", "\\bcancel", "\\bdelay"],
+      "impact_pct": 0.05
+    },
+    {
+      "id": "betting_legality",
+      "name": "Sports betting & prediction-market rules",
+      "sector": "Gaming",
+      "vehicle": "BETZ",
+      "members": ["DKNG", "FLUT", "MGM", "HOOD"],
+      "patterns": ["sports betting", "online gambling", "\\bigaming", "prediction markets? .*(legal|ban|cftc|regulat|court)", "\\bcftc\\b.*(event contract|prediction)"],
+      "direction": 0,
+      "positive": ["legaliz", "\\bapprove", "\\ballow"],
+      "negative": ["\\bban", "prohibit", "restrict", "\\btax"],
+      "impact_pct": 0.04
+    },
+    {
+      "id": "taiwan_risk",
+      "name": "China–Taiwan conflict risk",
+      "sector": "Taiwan & chip supply",
+      "vehicle": "EWT",
+      "members": ["TSM", "AAPL", "NVDA"],
+      "patterns": ["invade taiwan", "invasion of taiwan", "china.*taiwan.*(blockade|invasion|military|attack)", "blockade of taiwan", "taiwan strait"],
+      "direction": -1,
+      "impact_pct": 0.15
+    },
+    {
+      "id": "ai_rules",
+      "name": "AI regulation",
+      "sector": "AI platforms",
+      "vehicle": "AIQ",
+      "members": ["NVDA", "MSFT", "GOOGL", "META", "AMZN"],
+      "patterns": ["ai (regulation|moratorium|bill|act|safety bill|executive order)", "regulat(e|ing) ai\\b", "artificial intelligence (bill|act|regulation)", "ai preemption", "state ai laws?"],
+      "direction": -1,
+      "positive": ["preempt", "\\bveto", "\\brepeal", "\\bblock"],
+      "impact_pct": 0.02
+    },
+    {
+      "id": "mortgage_rates",
+      "name": "Mortgage rates & housing",
+      "sector": "Homebuilders",
+      "vehicle": "XHB",
+      "members": ["DHI", "LEN", "PHM", "HD"],
+      "patterns": ["mortgage rate", "30-year (fixed )?mortgage"],
+      "direction": 0,
+      "positive": ["\\bbelow", "\\bunder", "\\bfall", "\\bdrop", "\\bdip"],
+      "negative": ["\\babove", "\\bover", "\\brise", "\\bexceed"],
+      "impact_pct": 0.03
+    }
+  ]
+}

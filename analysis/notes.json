@@ -1,6 +1,7 @@
 {
-  "_doc": "Analyst judgments that persist across weekly scans. Keys under 'markets' are the 'key' field from data/latest.json (e.g. 'polymarket:12345', 'kalshi:KXTICKER-26DEC31'). Fields: direction (+1 YES is good for the stock, -1 bad), impact_pct (stock move if YES fully resolves, e.g. 0.06), ticker (override the linked ticker), category (override classification), ignore (true drops the market), verdict (actionable | watch | priced-in | noise | mapping-error), thesis (1-3 sentences), updated (YYYY-MM-DD). Under 'tickers': implied_vol (annualized options-implied vol, e.g. 0.55, replaces realized vol for price bets), next_earnings (YYYY-MM-DD), note.",
+  "_doc": "Analyst judgments that persist across weekly scans. 'markets' is keyed by the 'key' field in data/latest.json (e.g. 'polymarket:12345', 'kalshi:KXTICKER-26DEC31'): direction (+1 YES is good for the stock or sector ETF, -1 bad), impact_pct (move if YES fully resolves, e.g. 0.06), ticker (override the linked ticker), category (override classification), ignore (true drops the market), verdict (actionable | watch | priced-in | noise | mapping-error), thesis (1-3 sentences), updated (YYYY-MM-DD). Market-level direction/impact also apply when the market is netted into a theme. 'themes' is keyed by theme id from themes.json: impact_pct (default for its markets), verdict, thesis, ignore, updated. 'tickers': implied_vol (annualized options-implied vol, e.g. 0.55, replaces realized vol for price bets), next_earnings (YYYY-MM-DD), note.",
   "updated": null,
+  "themes": {},
   "markets": {},
   "tickers": {}
 }
