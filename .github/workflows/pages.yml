@@ -1,0 +1,37 @@
+# Publishes site/ (the weekly dashboard) to GitHub Pages.
+# Off by default: it only deploys when the repository variable INFO_ARB_PUBLIC is "true"
+# (Settings → Secrets and variables → Actions → Variables) and Pages is set to
+# "GitHub Actions" (Settings → Pages). Runs on pushes to the default branch that change
+# the site, or by hand from the Actions tab.
+name: Info Arb dashboard → GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["site/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: info-arb-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: vars.INFO_ARB_PUBLIC == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

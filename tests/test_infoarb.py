@@ -1,4 +1,4 @@
-"""Offline tests: python3 -m unittest discover -s info_arb/tests -t info_arb"""
+"""Offline tests: python3 tests/test_infoarb.py  (or: python3 -m unittest discover -s tests -t .)"""
 
 from __future__ import annotations
 

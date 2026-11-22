@@ -13,31 +13,31 @@ applies this (horizon weight × theme boost, see `config.json` → `preferences`
 order and the brief should follow it too.
 
 All paths below are relative to the repository root. Work on the branch named in
-`info_arb/BRANCH` (create nothing else; push only there).
+`BRANCH` (create nothing else; push only there).
 
 ## 0. Setup
 
 ```bash
-git fetch origin "$(cat info_arb/BRANCH)" && git checkout "$(cat info_arb/BRANCH)" && git pull --ff-only
-python3 info_arb/tests/test_infoarb.py    # offline, a few seconds; stop and report if it fails
+git fetch origin "$(cat BRANCH)" && git checkout "$(cat BRANCH)" && git pull --ff-only
+python3 tests/test_infoarb.py    # offline, a few seconds; stop and report if it fails
 ```
 
 ## 1. Scan
 
 ```bash
-python3 info_arb/scan.py
+python3 scan.py
 ```
 
 - Exit 0: continue.
 - Exit 2 or 3: a data source was unreachable (stderr says which, and whether the
   sandbox proxy refused the host). **Do not substitute made-up or remembered data.**
   Commit nothing, skip to step 7, and report which hosts were blocked. The hosts this
-  needs are listed in `info_arb/README.md` under "Network access".
+  needs are listed in `README.md` under "Network access".
 - Partial results (one platform down, some tickers missing) are fine; say so in the brief.
 
 ## 2. Review the candidates
 
-Read `info_arb/data/candidates.md`. Review in this order, and spend most of your time on
+Read `data/candidates.md`. Review in this order, and spend most of your time on
 the first two:
 
 1. **Themes** (the "Themes" table, keys `theme:<id>`). For each, check every netted market
@@ -52,10 +52,10 @@ the first two:
 3. **Short-dated rows** only if marked exempt (very large delta). Skip the rest.
 4. **Big movers with no link** (bottom of candidates.md): skim for trends with a
    stock-market angle the scanner doesn't cover. If one is material and has a clear sector
-   ETF, add a theme to `info_arb/themes.json` (same shape as the others; precise regex
+   ETF, add a theme to `themes.json` (same shape as the others; precise regex
    patterns, no common words) and say so in the brief. Otherwise mention it under Watching.
 
-For detail on any row, look it up by `key` in `info_arb/data/latest.json`.
+For detail on any row, look it up by `key` in `data/latest.json`.
 
 For each candidate:
 
@@ -95,23 +95,23 @@ Practical notes from earlier runs:
 - Successor-name legs and tabloid follow-ups are noise: `"ignore": true`.
 - If nothing clears the bar, say so plainly. That is a valid weekly result.
 
-Record everything in `info_arb/analysis/notes.json` (schema in its `_doc` field), set
+Record everything in `analysis/notes.json` (schema in its `_doc` field), set
 `"updated"` to today's date, and keep earlier entries unless they are clearly stale
 (market closed, or a later verdict replaces them).
 
 ## 3. Re-score with your notes
 
 ```bash
-python3 info_arb/scan.py --rescore
+python3 scan.py --rescore
 ```
 
 Check that the ranking now reflects your calls (ignored rows gone, directions applied). If you
-added a theme in step 2, run the full `python3 info_arb/scan.py` again instead, since the new
+added a theme in step 2, run the full `python3 scan.py` again instead, since the new
 ETF needs price data.
 
 ## 4. Write the brief
 
-Create `info_arb/analysis/briefs/YYYY-MM-DD.md` (today's UTC date) in this shape:
+Create `analysis/briefs/YYYY-MM-DD.md` (today's UTC date) in this shape:
 
 ```markdown
 ## Bottom line
@@ -145,16 +145,15 @@ investment advice" once at the end. Keep it under ~600 words.
 ## 5. Render
 
 ```bash
-python3 info_arb/render.py
+python3 render.py
 ```
 
 ## 6. Commit and push
 
 ```bash
-git add info_arb/data/latest.json info_arb/data/candidates.md info_arb/data/snapshots \
-        info_arb/analysis info_arb/site info_arb/themes.json
+git add data/latest.json data/candidates.md data/snapshots analysis site themes.json
 git commit -m "Weekly info-arb scan $(date -u +%F)"
-git push -u origin "$(cat info_arb/BRANCH)"
+git push -u origin "$(cat BRANCH)"
 ```
 
 Retry the push up to 4 times with backoff on network errors. If the push is rejected
@@ -163,8 +162,8 @@ because the remote moved, `git pull --no-rebase` and push again.
 ## 7. Publish the dashboard and report
 
 - The dashboard page is already designed; do not restyle it. Publish
-  `info_arb/site/artifact.html` with the Artifact tool. If `info_arb/ARTIFACT_URL`
+  `site/artifact.html` with the Artifact tool. If `ARTIFACT_URL`
   exists, read that artifact first, then publish to the same URL; otherwise publish a
-  new one (icon "chart") and save its URL to `info_arb/ARTIFACT_URL` (commit and push it).
+  new one (icon "chart") and save its URL to `ARTIFACT_URL` (commit and push it).
 - Finish with a short message: the top 3 ideas (ticker, trade, one-line why, market
   link), the dashboard link, and anything that was blocked or partial.

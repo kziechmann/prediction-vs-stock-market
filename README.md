@@ -76,10 +76,10 @@ watchlist only, since they're noise or derived from the price itself.
 Python 3.10+ and the standard library only; there's nothing to install.
 
 ```bash
-python3 info_arb/scan.py            # live scan → info_arb/data/
-python3 info_arb/render.py          # → info_arb/site/index.html (open it in a browser)
-python3 info_arb/scan.py --rescore  # re-score after editing analysis/notes.json, no network
-python3 info_arb/tests/test_infoarb.py   # offline tests
+python3 scan.py            # live scan → data/
+python3 render.py          # → site/index.html (open it in a browser)
+python3 scan.py --rescore  # re-score after editing analysis/notes.json, no network
+python3 tests/test_infoarb.py   # offline tests
 ```
 
 | Output | What it is |
@@ -105,8 +105,9 @@ The scanner needs these hosts (all public, no API keys):
 - `query1.finance.yahoo.com`, `query2.finance.yahoo.com` (stock prices)
 - `stooq.com` (fallback stock prices; optional, and its connection drops from the cloud sandbox)
 
-Claude Code cloud sessions for this repo use the personal environment `bankstatement_script`,
-which allows exactly these hosts. The weekly scheduled task runs there too.
+Claude Code cloud sessions for this project use a personal cloud environment that allows
+exactly these hosts (created as `bankstatement_script`, where this project started). The
+weekly scheduled task runs there too.
 
 API notes (checked Nov 2026): Polymarket's Gamma API rejects page sizes over 50 (HTTP 406).
 Kalshi rate-limits by a points budget (600 points; a nested-markets page costs 50) and the client
@@ -121,7 +122,7 @@ agent reports the blocked hosts instead of publishing.
 The dashboard is a single static file with its data embedded, so any static host works.
 For GitHub Pages: merge to `main`, set **Settings → Pages → Source** to "GitHub Actions",
 and add the repository variable `INFO_ARB_PUBLIC = true`. The workflow in
-`.github/workflows/info-arb-pages.yml` then deploys `info_arb/site` whenever it changes.
+`.github/workflows/pages.yml` then deploys `site/` whenever it changes.
 Before publishing, keep the "not investment advice" footer, and consider leaving the
 analyst's position-level calls out of the public brief.
 

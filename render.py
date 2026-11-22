@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the dashboard from data/latest.json, analysis/notes.json and the newest brief.
 
-  python3 info_arb/render.py
+  python3 render.py
 
 Writes:
   site/index.html      full HTML document (GitHub Pages / any static host / open locally)

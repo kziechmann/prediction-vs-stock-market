@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Weekly scan: prediction markets about listed companies vs. the stocks themselves.
 
-Usage (from the repo root):
-  python3 info_arb/scan.py               # live fetch + score + write data/
-  python3 info_arb/scan.py --rescore     # re-score cached inputs after editing analysis/notes.json
-  python3 info_arb/scan.py --inputs F    # score a saved inputs file (tests, offline runs)
+Usage (from the repository root):
+  python3 scan.py               # live fetch + score + write data/
+  python3 scan.py --rescore     # re-score cached inputs after editing analysis/notes.json
+  python3 scan.py --inputs F    # score a saved inputs file (tests, offline runs)
 
-Outputs (info_arb/data/):
+Outputs (data/):
   latest.json            everything the dashboard needs
   candidates.md          compact list for the weekly analyst (Claude) to review
   snapshots/DATE.json    flagged signals, used later for the track record
@@ -172,7 +172,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--rescore", action="store_true", help="re-score data/cache/inputs.json without fetching")
     ap.add_argument("--inputs", type=Path, help="score this inputs file instead of fetching")
-    ap.add_argument("--out", type=Path, default=ROOT / "data", help="output folder (default info_arb/data)")
+    ap.add_argument("--out", type=Path, default=ROOT / "data", help="output folder (default data/)")
     ap.add_argument("--notes", type=Path, default=ROOT / "analysis" / "notes.json")
     ap.add_argument("--no-snapshot", action="store_true", help="don't write a dated snapshot")
     args = ap.parse_args(argv)
