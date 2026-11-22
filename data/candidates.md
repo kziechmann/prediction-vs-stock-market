@@ -1,4 +1,4 @@
-# Candidates for analyst review — 2026-11-21T18:04:52.901134Z
+# Candidates for analyst review — 2026-11-22T23:10:47.271306Z
 
 Each row's `key` is what analysis/notes.json uses. Prob/edge in probability points.
 
@@ -6,9 +6,10 @@ Each row's `key` is what analysis/notes.json uses. Prob/edge in probability poin
 
 | key | theme | ETF | window | implied | ETF vs SPY | priced in | score | top markets |
 |---|---|---|---|---|---|---|---|---|
-| `theme:crypto_policy` | Crypto legislation & regulation | BITQ | 7d | -0.6% | +1.0% | 0% | 0.54 | [Will a crypto market structure bill become law before Jul 1,](https://kalshi.com/markets/kxcryptostructure) -10% |
-| `theme:defense` | Defense spending & war risk | ITA | 7d | +0.6% | -0.7% | 0% | 0.47 | [Russia x Ukraine energy ceasefire agreement by December 31, ](https://polymarket.com/event/russia-x-ukraine-energy-ceasefire-agreement-by) -14%; [Ukraine peace referendum scheduled by June 30, 2027?](https://polymarket.com/event/ukraine-calls-a-referendum-on-peace-deal-with-russia-by-january-31) -6% |
-| `theme:oil_supply` | Oil supply shocks | XLE | 7d | -3.2% | -4.3% | 100% | 0.00 | [Will WTI Crude Oil (WTI) hit (HIGH) $90 in November?](https://polymarket.com/event/what-price-will-wti-hit-in-november-2026) -52%; [Will the 7-day moving average of transit calls through the S](https://kalshi.com/markets/kxhormuznorm) -18%; [Will the maximum WTI front month settle price reach $115.01 ](https://kalshi.com/markets/kxwtimax) -5% |
+| `theme:defense` | Defense spending & war risk | ITA | 7d | +0.4% | -0.7% | 0% | 0.35 | [Russia x Ukraine energy ceasefire agreement by December 31, ](https://polymarket.com/event/russia-x-ukraine-energy-ceasefire-agreement-by) -9%; [Ukraine peace referendum scheduled by June 30, 2027?](https://polymarket.com/event/ukraine-calls-a-referendum-on-peace-deal-with-russia-by-january-31) -6% |
+| `theme:crypto_policy` | Crypto legislation & regulation | BITQ | 7d | -0.3% | +1.0% | 0% | 0.27 | [Will a crypto market structure bill become law before Jul 1,](https://kalshi.com/markets/kxcryptostructure) -5% |
+| `theme:oil_supply` | Oil supply shocks | XLE | 7d | -3.8% | -4.3% | 100% | 0.00 | [Will WTI Crude Oil (WTI) hit (HIGH) $90 in November?](https://polymarket.com/event/what-price-will-wti-hit-in-november-2026) -46%; [Will there be more than 15 transit calls through the Strait ](https://kalshi.com/markets/kxhormuzweekly) -23%; [Will the 7-day moving average of transit calls through the S](https://kalshi.com/markets/kxhormuznorm) -22% |
+| `theme:ai_rules` | AI regulation | AIQ | 7d | +0.1% | +3.2% | 100% | 0.00 | [U.S. enacts AI safety bill before 2027?](https://polymarket.com/event/us-enacts-ai-safety-bill-before-2027) -5% |
 
 ## Flagged opportunities
 
@@ -24,21 +25,21 @@ Readings:
 
 | key | ticker | category | question | prob | Δ odds | stock abn |
 |---|---|---|---|---|---|---|
-| `polymarket:5456805` | SPCX | other | [SpaceX becomes a US mobile carrier by December 31, 2027?](https://polymarket.com/event/spacex-becomes-a-us-mobile-carrier-by) | 50% | +23.5% (30d) | +11.5% |
-| `polymarket:6997774` | NVDA | other | [Fourth Jensen Huang affair reported by December 31?](https://polymarket.com/event/fourth-jensen-huang-affair-reported-by-december-31) | 20% | -18.5% (7d) | -5.5% |
-| `polymarket:6908170` | NVDA | other | [Jensen Huang divorce by March 31, 2027?](https://polymarket.com/event/jensen-huang-divorce-in-2026) | 16% | -13.0% (7d) | -5.5% |
-| `kalshi:KXCOMPANYACTIONMERGER-27-27FEB01` | TSLA | mna | [Will Tesla or SpaceX announce a definitive, binding agreement for Tesla to acquire SpaceX, SpaceX to acquire T](https://kalshi.com/markets/kxcompanyactionmerger) | 48% | +17.0% (30d) | +15.0% |
-| `kalshi:KXCOMPANYACTIONMERGER-27-27FEB01` | SPCX | mna | [Will Tesla or SpaceX announce a definitive, binding agreement for Tesla to acquire SpaceX, SpaceX to acquire T](https://kalshi.com/markets/kxcompanyactionmerger) | 48% | +17.0% (30d) | +11.5% |
-| `kalshi:KXCRYPTOPAY-27` | GOOGL | other | [Will any of Google, Meta, Amazon, Tesla, or X accept crypto for any of their core services in 2026?](https://kalshi.com/markets/kxcryptopay) | 16% | -22.0% (30d) | -7.1% |
-| `kalshi:KXCRYPTOPAY-27` | META | other | [Will any of Google, Meta, Amazon, Tesla, or X accept crypto for any of their core services in 2026?](https://kalshi.com/markets/kxcryptopay) | 16% | -22.0% (30d) | -0.6% |
-| `kalshi:KXCRYPTOPAY-27` | AMZN | other | [Will any of Google, Meta, Amazon, Tesla, or X accept crypto for any of their core services in 2026?](https://kalshi.com/markets/kxcryptopay) | 16% | -22.0% (30d) | +11.1% |
-| `kalshi:KXCRYPTOPAY-27` | TSLA | other | [Will any of Google, Meta, Amazon, Tesla, or X accept crypto for any of their core services in 2026?](https://kalshi.com/markets/kxcryptopay) | 16% | -22.0% (30d) | +15.0% |
-| `polymarket:3211313` | SPOT | other | [Will Man I Need – Olivia Dean be the #2 song in the US for 2026?](https://polymarket.com/event/2-us-spotify-song-2026-20260729214033029) | 71% | +24.6% (30d) | +1.8% |
-| `polymarket:6999515` | NVDA | other | [Will 3 Jensen Huang affairs be reported by December 31?](https://polymarket.com/event/how-many-jensen-huang-affairs-will-be-reported-by-december-31) | 79% | +19.0% (7d) | -5.5% |
-| `kalshi:OAIAGI-27` | MSFT | product | [Will OpenAI announce the creation of AGI? — Before 2028](https://kalshi.com/markets/kxoaiagi) | 48% | +9.0% (7d) | +2.0% |
-| `kalshi:KXCOMPANYACTIONMERGER-27-27MAY01` | TSLA | mna | [Will Tesla or SpaceX announce a definitive, binding agreement for Tesla to acquire SpaceX, SpaceX to acquire T](https://kalshi.com/markets/kxcompanyactionmerger) | 64% | -11.5% (7d) | +8.6% |
-| `kalshi:KXCOMPANYACTIONMERGER-27-27MAY01` | SPCX | mna | [Will Tesla or SpaceX announce a definitive, binding agreement for Tesla to acquire SpaceX, SpaceX to acquire T](https://kalshi.com/markets/kxcompanyactionmerger) | 64% | -11.5% (7d) | +12.3% |
-| `kalshi:KXCOMPANYACTIONMERGER-27-27JAN01` | TSLA | mna | [Will Tesla or SpaceX announce a definitive, binding agreement for Tesla to acquire SpaceX, SpaceX to acquire T](https://kalshi.com/markets/kxcompanyactionmerger) | 15% | -15.0% (7d) | +8.6% |
+| `kalshi:KXSTARSHIPDOCK-28` | SPCX | product | [Will two SpaceX Starships dock together before 2028?](https://kalshi.com/markets/kxstarshipdock) | 76% | +9.5% (30d) | +8.7% |
+| `kalshi:KXWAYMOCITY-26DEC-DET` | GOOGL | other | [Will Waymo operate ride-hailing in Detroit, MI before Jan 1, 2027?](https://kalshi.com/markets/kxwaymocity) | 2% | -14.5% (30d) | -6.6% |
+| `kalshi:KXBLUESPACEX-30` | SPCX | product | [Will Blue Origin land an uncrewed Blue Moon MK1 lander on the moon before SpaceX lands an uncrewed Starship?](https://kalshi.com/markets/kxbluespacex) | 66% | +8.0% (30d) | +8.7% |
+| `polymarket:5456805` | SPCX | other | [SpaceX becomes a US mobile carrier by December 31, 2027?](https://polymarket.com/event/spacex-becomes-a-us-mobile-carrier-by) | 50% | +12.0% (30d) | +8.7% |
+| `polymarket:2507003` | SPCX | other | [Will two SpaceX Starships dock together by December 31, 2027?](https://polymarket.com/event/two-spacex-starships-dock-together-by) | 72% | +9.5% (30d) | +8.7% |
+| `polymarket:1345235` | MSFT | corporate_action | [Will OpenAI not IPO by December 31, 2027?](https://polymarket.com/event/openai-ipo-closing-market-cap-554) | 31% | +6.7% (7d) | +2.0% |
+| `polymarket:3211306` | SPOT | other | [Will "Earrings – Malcom Todd" be the #2 song in the US for 2026?](https://polymarket.com/event/2-us-spotify-song-2026-20260729214033029) | 23% | +9.7% (7d) | -3.2% |
+| `polymarket:6998284` | NVDA | other | [Will Jensen Huang rejoin NVIDIA by November 30, 2026?](https://polymarket.com/event/jensen-huang-rejoins-nvidia-byptptpt) | 1% | -7.6% (7d) | -5.5% |
+| `polymarket:6367323` | SPOT | other | [Will Rihanna have the second-greatest number of monthly Spotify listeners this month?](https://polymarket.com/event/2-spotify-artist-in-november-20261130) | 3% | -17.9% (7d) | -3.2% |
+| `polymarket:1295980` | MSFT | product | [Will OpenAI announce glasses in 2026?](https://polymarket.com/event/what-kind-of-product-will-openai-announce-in-2026) | 4% | -8.9% (30d) | +2.7% |
+| `polymarket:6884119` | NVDA | other | [Jensen Huang divorce by December 31, 2026?](https://polymarket.com/event/jensen-huang-divorce-in-2026) | 6% | -5.0% (7d) | -5.5% |
+| `polymarket:6367316` | SPOT | other | [Will The Weeknd have the second-greatest number of monthly Spotify listeners this month?](https://polymarket.com/event/2-spotify-artist-in-november-20261130) | 96% | +18.0% (7d) | -3.2% |
+| `polymarket:2698815` | GOOGL | other | [Will Waymo operate in 16-19 cities on December 31 2026?](https://polymarket.com/event/how-many-cities-will-waymo-operate-in-by-december-31-20260626203648850) | 5% | -8.1% (30d) | -6.6% |
+| `polymarket:2109513` | MSFT | other | [Will OpenAI have a #1 AI model by December 31, 2026?](https://polymarket.com/event/which-companies-will-have-a-1-ai-model-by-december-31) | 4% | -8.5% (30d) | +2.7% |
+| `polymarket:1323317` | TSM | other | [Will the US federal government take a stake in Taiwan Semiconductor Manufacturing Company Limited?](https://polymarket.com/event/which-companies-will-the-us-take-a-stake-in) | 4% | -10.0% (30d) | -2.1% |
 
 ## Big movers with no company or theme link (possible new trends)
 
@@ -46,23 +47,23 @@ Skim for anything with a stock-market angle; add a theme to themes.json if it re
 
 | question | prob | Δ7d | Δ30d | volume | tags |
 |---|---|---|---|---|---|
-| [Will Predict.fun launch a token by November 30, 2026?](https://polymarket.com/event/will-predictfun-launch-a-token-by) | 6% | -92.0% | -74.3% | 549,216 | Crypto, token launch, Pre-Market |
-| [Will the Democratic Party candidate win the 2026 Texas Senate election by 12% or more?](https://polymarket.com/event/texas-senate-margin-of-victory-2026) | 98% | +0.2% | +97.0% | 267,734 | Midterms, Politics, Elections |
-| [Will Aleksandar Vučić be the next Prime Minister of Serbia?](https://polymarket.com/event/next-prime-minister-of-serbia-20260629223938642) | 2% | +0.2% | -69.5% | 2,760,682 | Serbia, Politics, Elections |
-| [Will Valencia CF win on 2026-11-21?](https://polymarket.com/event/lal-ray-val-2026-11-21) | 100% | +76.4% | — | 332,011 | Sports, Games, Soccer |
-| [UFC Fight Night: Shamil Gaziev vs. Tallison Teixeira (Heavyweight, Prelims)](https://polymarket.com/event/ufc-sha27-tal2-2026-11-21) | 0% | -72.5% | — | 252,088 | Sports, UFC, Games |
-| [US imports Russian diesel by November 30?](https://polymarket.com/event/us-imports-russian-diesel-by-october-31) | 4% | -2.1% | -66.3% | 631,863 | Oil, Trump, Russia |
-| [AI bubble burst in 2026?](https://polymarket.com/event/ai-bubble-burst-by) | 66% | +57.6% | +56.6% | 3,434,973 | Business, Tech, Finance |
-| [Will AI solve 0 more Millennium Prize Problems in 2026?](https://polymarket.com/event/how-many-more-millennium-prize-problems-will-ai-solve-in-2026) | 22% | -65.5% | -59.5% | 272,164 | AI, Math, Tech |
-| [Will an AI lab announce another Millennium Prize solution by December 31, 2026?](https://polymarket.com/event/ai-lab-announces-another-millennium-prize-solution-by) | 77% | +61.5% | +54.5% | 333,407 | AI, Math, Tech |
-| [Will Ethereum dip to $1,500 by December 31, 2026?](https://polymarket.com/event/what-price-will-ethereum-hit-before-2027) | 60% | +28.8% | +50.5% | 3,822,578 | Ethereum, Hit Price, Crypto Prices |
-| [Will Bitcoin dip to $55,000 by December 31, 2026?](https://polymarket.com/event/what-price-will-bitcoin-hit-before-2027) | 57% | +29.0% | +47.5% | 9,313,546 | Bitcoin, Yearly, Hit Price |
-| [Will Bitcoin reach $90,000 by December 31, 2026?](https://polymarket.com/event/what-price-will-bitcoin-hit-before-2027) | 4% | -2.1% | -49.5% | 3,615,416 | Bitcoin, Yearly, Hit Price |
-| [Will Bitcoin reach $67,500 in November?](https://polymarket.com/event/what-price-will-bitcoin-hit-in-november-2026) | 22% | -56.0% | — | 250,700 | Bitcoin, Monthly, Hit Price |
-| [UFC Fight Night: Amir Albazi vs. Alessandro Costa (Flyweight, Prelims)](https://polymarket.com/event/ufc-ami-ale35-2026-11-21) | 100% | +52.4% | — | 430,261 | Sports, UFC, Games |
-| [Will National Party win the most seats in the New Zealand House of Representatives in the 2026 New Z](https://polymarket.com/event/new-zealand-legislative-election-winner) | 99% | +0.1% | +46.2% | 790,659 | Politics, Global Elections, Elections |
-| [Will Rayo Vallecano de Madrid win on 2026-11-21?](https://polymarket.com/event/lal-ray-val-2026-11-21) | 0% | -49.5% | — | 277,315 | Sports, Games, Soccer |
-| [Will Solana dip to $60 by December 31, 2026?](https://polymarket.com/event/what-price-will-solana-hit-before-2027) | 56% | +12.6% | +47.2% | 290,326 | Yearly, Solana, Hit Price |
-| [Will Labour Party win the most seats in the New Zealand House of Representatives in the 2026 New Zea](https://polymarket.com/event/new-zealand-legislative-election-winner) | 1% | +0.1% | -43.9% | 592,555 | Politics, Global Elections, Elections |
-| [Will Chuck Schumer be the next Senate Majority Leader?](https://polymarket.com/event/next-senate-majority-leader-485) | 92% | +6.5% | +38.5% | 1,081,971 | Senate, Elections, Midterms |
-| [Will Jeremiah Smith win the 2026 Heisman Trophy?](https://polymarket.com/event/ncaa-football-2026-heisman-award-winner-20260731185656435) | 80% | +39.0% | +33.0% | 480,548 | CFB (All), NCAAF, sport |
+| [Will Predict.fun launch a token by November 30, 2026?](https://polymarket.com/event/will-predictfun-launch-a-token-by) | 5% | -93.0% | -75.3% | 555,118 | Crypto, token launch, Pre-Market |
+| [Will the Democratic Party candidate win the 2026 Texas Senate election by 12% or more?](https://polymarket.com/event/texas-senate-margin-of-victory-2026) | 98% | -0.2% | +97.1% | 267,753 | Midterms, Politics, Elections |
+| [US imports Russian diesel by November 30?](https://polymarket.com/event/us-imports-russian-diesel-by-october-31) | 2% | -5.0% | -78.3% | 651,341 | Oil, Trump, Russia |
+| [Will Aleksandar Vučić be the next Prime Minister of Serbia?](https://polymarket.com/event/next-prime-minister-of-serbia-20260629223938642) | 2% | +0.1% | -67.1% | 2,761,033 | Serbia, Politics, Elections |
+| [Will AI solve 0 more Millennium Prize Problems in 2026?](https://polymarket.com/event/how-many-more-millennium-prize-problems-will-ai-solve-in-2026) | 16% | -72.5% | -62.5% | 321,446 | AI, Math, Tech |
+| [Will an AI lab announce another Millennium Prize solution by December 31, 2026?](https://polymarket.com/event/ai-lab-announces-another-millennium-prize-solution-by) | 84% | +70.0% | +61.0% | 380,912 | AI, Math, Tech |
+| [Jaguars vs. Giants](https://polymarket.com/event/nfl-jax-nyg-2026-11-22) | 20% | -50.5% | — | 1,755,601 | Sports, NFL (All), Games |
+| [Will Bitcoin reach $90,000 by December 31, 2026?](https://polymarket.com/event/what-price-will-bitcoin-hit-before-2027) | 4% | -2.4% | -47.9% | 3,622,499 | Bitcoin, Yearly, Hit Price |
+| [Pistons vs. Hawks](https://polymarket.com/event/nba-det-atl-2026-11-22) | 0% | -52.4% | — | 921,858 | Sports, NBA, Games |
+| [Will Ethereum dip to $1,500 by December 31, 2026?](https://polymarket.com/event/what-price-will-ethereum-hit-before-2027) | 57% | +22.0% | +47.4% | 3,862,102 | Ethereum, Hit Price, Crypto Prices |
+| [Will Bitcoin dip to $55,000 by December 31, 2026?](https://polymarket.com/event/what-price-will-bitcoin-hit-before-2027) | 54% | +22.0% | +44.0% | 9,404,962 | Bitcoin, Yearly, Hit Price |
+| [AI bubble burst in 2026?](https://polymarket.com/event/ai-bubble-burst-by) | 52% | +44.0% | +42.4% | 3,475,549 | Business, Tech, Finance |
+| [Jets vs. Chargers](https://polymarket.com/event/nfl-nyj-lac-2026-11-22) | 80% | +42.5% | — | 3,387,842 | Sports, NFL (All), Games |
+| [Will Bitcoin reach $67,500 in November?](https://polymarket.com/event/what-price-will-bitcoin-hit-in-november-2026) | 22% | -48.5% | — | 289,736 | Bitcoin, Monthly, Hit Price |
+| [Israel x Iran ceasefire continues through November 30?](https://polymarket.com/event/israel-x-iran-ceasefire-continues-throughptptpt-20260716224448963) | 90% | +3.0% | +40.5% | 2,491,233 | Iran, Israel, Geopolitics |
+| [Will National Party win the most seats in the New Zealand House of Representatives in the 2026 New Z](https://polymarket.com/event/new-zealand-legislative-election-winner) | 99% | +0.5% | +43.5% | 791,575 | Politics, Global Elections, Elections |
+| [Will Solana dip to $60 by December 31, 2026?](https://polymarket.com/event/what-price-will-solana-hit-before-2027) | 54% | +3.9% | +46.6% | 290,449 | Yearly, Solana, Hit Price |
+| [Will Labour Party win the most seats in the New Zealand House of Representatives in the 2026 New Zea](https://polymarket.com/event/new-zealand-legislative-election-winner) | 1% | +0.2% | -39.6% | 593,533 | Politics, Global Elections, Elections |
+| [Will Predict.fun launch a token by December 31, 2026?](https://polymarket.com/event/will-predictfun-launch-a-token-by) | 60% | -39.2% | -30.2% | 637,552 | Crypto, token launch, Pre-Market |
+| [Will Ulf Kristersson be the next Prime Minister of Sweden?](https://polymarket.com/event/next-prime-minister-of-sweden) | 52% | +27.3% | +33.3% | 2,958,833 | Elections, World, World Elections |
